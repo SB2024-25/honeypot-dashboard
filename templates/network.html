@@ -9,8 +9,21 @@
                 <tr>
                     <th scope="col" class="px-6 py-3">Timestamp</th>
                     <th scope="col" class="px-6 py-3">IP Address</th>
-                    <th scope="col" class="px-6 py-3">Location</th>
+
+                    {# This logic only shows these extra columns on the Keylogger page #}
+                    {% if source_name == 'Keylogger' %}
+                        <th scope="col" class="px-6 py-3">Target Field</th>
+                        <th scope="col" class="px-6 py-3">Captured Data</th>
+                    {% endif %}
+
                     <th scope="col" class="px-6 py-3">Attack Type</th>
+                    <th scope="col" class="px-6 py-3">Location</th>
+
+                    {# This is shown for Network and Website logs #}
+                    {% if source_name != 'Keylogger' %}
+                        <th scope="col" class="px-6 py-3">Target</th>
+                        <th scope="col" class="px-6 py-3">Payload / Credentials</th>
+                    {% endif %}
                 </tr>
             </thead>
             <tbody>
@@ -18,12 +31,25 @@
                 <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                     <td class="px-6 py-4">{{ attack.timestamp }}</td>
                     <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">{{ attack.ip_address }}</td>
-                    <td class="px-6 py-4">{{ attack.location }}</td>
+
+                    {# Corresponding data cells that only show for the Keylogger page #}
+                    {% if source_name == 'Keylogger' %}
+                        <td class="px-6 py-4">{{ attack.target_context | default:"" }}</td>
+                        <td class="px-6 py-4 font-mono text-red-400">{{ attack.captured_data | default:"" }}</td>
+                    {% endif %}
+                    
                     <td class="px-6 py-4">{{ attack.get_attack_type_display }}</td>
+                    <td class="px-6 py-4">{{ attack.location }}</td>
+
+                    {# Corresponding data cells for Network/Website #}
+                    {% if source_name != 'Keylogger' %}
+                        <td class="px-6 py-4">{{ attack.target_context | default:"" }}</td>
+                        <td class="px-6 py-4 font-mono text-red-400">{{ attack.captured_data | default:"" }}</td>
+                    {% endif %}
                 </tr>
                 {% empty %}
                 <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                    <td colspan="4" class="px-6 py-4 text-center text-gray-500">
+                    <td colspan="6" class="px-6 py-4 text-center text-gray-500">
                         No logs found for this source.
                     </td>
                 </tr>
