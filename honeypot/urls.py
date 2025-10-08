@@ -17,7 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from . import views
-from django.contrib.auth import views as auth_views 
+from django.contrib.auth import views as auth_views
 
 urlpatterns = [
     path('admin', admin.site.urls),
@@ -25,9 +25,7 @@ urlpatterns = [
     path('login', views.handlelogin, name='handlelogin'),
     path('logout', views.handlelogout, name='handlelogout'),
     path('dashboard',views.dashboard,name="dashboard"),
-    path('fileanalysis',views.file_analysis,name="file_analysis"),
     path('network',views.network,name="network"),
-    path('photo',views.photo,name="photo"),
     path('setup',views.setup,name="setup"),
     path('server-setup',views.server_setup,name="server_setup"),
     path('start-flask-server', views.start_flask_server, name='start-flask-server'),
@@ -36,8 +34,13 @@ urlpatterns = [
     path('stop-network-server', views.stop_network_server, name='stop_network_server'),
     path('network-setup', views.network_setup, name='network_setup'),
     path('Keylogger',views.Keylogger,name="Keylogger"),
-    # path('setup_network/', setup_view, name='setup_view'),
-    path('website',views.website,name="website")
-    # path("networksetup")
-    # path('dashboard',views.dashboard,name="dashboard")
+    path('website',views.website,name="website"),
+    # ... all your other urls
+    path('api/attack-data/', views.attack_type_data, name='attack-data-api'),
+    
+    # ADD THIS NEW LINE
+    path('api/get-new-attacks/', views.get_new_attacks_api, name='get-new-attacks-api'),
+
+    # URL for our new chart data API
+    path('api/attack-data/', views.attack_type_data, name='attack-data-api'),
 ]

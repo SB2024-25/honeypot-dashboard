@@ -1,30 +1,49 @@
 {% extends 'base.html' %}
 {% block body %}
-{% load custom_filters %}
-<div class="relative overflow-x-auto shadow-md sm:rounded-lg">
-    <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-            <tr>
-                {% for key in keys %}
-                <th scope="col" class="px-6 py-3">
-                    {{key}}
-                </th>
+
+{% if service_is_active %}
+    <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+        <h5 class="text-xl font-bold leading-none text-gray-900 dark:text-white p-4">{{ source_name }} Logs</h5>
+        <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+            <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                <tr>
+                    <th scope="col" class="px-6 py-3">Timestamp</th>
+                    <th scope="col" class="px-6 py-3">IP Address</th>
+                    <th scope="col" class="px-6 py-3">Location</th>
+                    <th scope="col" class="px-6 py-3">Attack Type</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for attack in attack_logs %}
+                <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                    <td class="px-6 py-4">{{ attack.timestamp }}</td>
+                    <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">{{ attack.ip_address }}</td>
+                    <td class="px-6 py-4">{{ attack.location }}</td>
+                    <td class="px-6 py-4">{{ attack.get_attack_type_display }}</td>
+                </tr>
+                {% empty %}
+                <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+                    <td colspan="4" class="px-6 py-4 text-center text-gray-500">
+                        No logs found for this source.
+                    </td>
+                </tr>
                 {% endfor %}
-            </tr>
-        </thead>
-        <tbody>
-            {% for key_log in key_logs %}
-            <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-                {% for key in keys %}
-                <td class="px-6 py-4">
-                    {{ key_log|get_value:key }}
-                </td>
-                {% endfor %}
-            </tr>
-            {% endfor %}
-            
-        </tbody>
-    </table>
-</div>
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <div class="text-center bg-white dark:bg-gray-800 p-10 rounded-lg">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.286zm0 13.036h.008v.016h-.008v-.016z" />
+        </svg>
+        <h3 class="mt-2 text-lg font-medium text-gray-900 dark:text-white">Service Not Active</h3>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">The {{ source_name }} is not running. Please start it to see live data.</p>
+        <div class="mt-6">
+            <a href="{% url 'setup' %}" class="inline-flex items-center rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                Go to Setup Page
+            </a>
+        </div>
+    </div>
+{% endif %}
 
 {% endblock %}

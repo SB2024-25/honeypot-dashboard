@@ -1,36 +1,162 @@
 {% extends 'base.html' %}
 {% block body %}
-<!-- <p>Logging in as: {{ user.get_username }}</p> -->
-<div class="grid grid-cols-3 gap-4 mb-4">
-    {% for i in ip_addr %}
-    <div class="max-w-sm w-full bg-white rounded-lg shadow dark:bg-gray-800 p-4 md:p-6">
-        <div class="flex justify-between">
-        <div>
-            <h5 class="leading-none text-3xl font-bold text-gray-900 dark:text-white pb-2">{{ i }}</h5>
-            <p class="text-base font-normal text-gray-500 dark:text-gray-400">User Tracked</p>
+
+{% if services_active %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+        <div class="max-w-sm w-full bg-white rounded-lg shadow dark:bg-gray-800 p-4 md:p-6">
+            <div class="flex justify-between">
+                <div>
+                    <h5 id="total-attacks-stat" class="leading-none text-3xl font-bold text-gray-900 dark:text-white pb-2">{{ total_attacks | default:"0" }}</h5>
+                    <p class="text-base font-normal text-gray-500 dark:text-gray-400">Attacks on Active Services</p>
+                </div>
+            </div>
         </div>
-        
-        </div>
-        <!-- <div id="area-chart"></div> -->
-        <div class="grid grid-cols-1 items-center border-gray-200 border-t dark:border-gray-700 justify-between">
-        <div class="flex justify-between items-center pt-5">
-            <!-- Button -->
-            
-            <a
-            href="#"
-            class="uppercase text-sm font-semibold inline-flex items-center rounded-lg text-blue-600 hover:text-blue-700 dark:hover:text-blue-500  hover:bg-gray-100 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700 px-3 py-2">
-            Users Report
-            <svg class="w-2.5 h-2.5 ms-1.5 rtl:rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
-                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
-            </svg>
-            </a>
-        </div>
+        <div class="max-w-sm w-full bg-white rounded-lg shadow dark:bg-gray-800 p-4 md:p-6">
+            <div class="flex justify-between">
+                <div>
+                    <h5 id="unique-attackers-stat" class="leading-none text-3xl font-bold text-gray-900 dark:text-white pb-2">{{ unique_attackers | default:"0" }}</h5>
+                    <p class="text-base font-normal text-gray-500 dark:text-gray-400">Unique Attackers (IPs)</p>
+                </div>
+            </div>
         </div>
     </div>
-    {% endfor %}
-    
-  
-</div>
-    
+
+    <div class="bg-white rounded-lg shadow dark:bg-gray-800 p-4 md:p-6 mb-6">
+        <h5 class="text-xl font-bold leading-none text-gray-900 dark:text-white me-1">Live Attack Analysis</h5>
+        <div id="bar-chart"></div>
+    </div>
+
+    <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+        <h5 class="text-xl font-bold leading-none text-gray-900 dark:text-white p-4">Recent Activity (Live)</h5>
+        <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+            <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                <tr>
+                    <th scope="col" class="px-6 py-3">Timestamp</th>
+                    <th scope="col" class="px-6 py-3">Source</th>
+                    <th scope="col" class="px-6 py-3">IP Address</th>
+                    <th scope="col" class="px-6 py-3">Location</th>
+                    <th scope="col" class="px-6 py-3">Attack Type</th>
+                </tr>
+            </thead>
+            <tbody id="attack-table-body">
+                {% for attack in latest_attacks %}
+                <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600" data-id="{{ attack.id }}">
+                    <td class="px-6 py-4">{{ attack.timestamp }}</td>
+                    <td class="px-6 py-4">{{ attack.get_source_display }}</td>
+                    <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">{{ attack.ip_address }}</td>
+                    <td class="px-6 py-4">{{ attack.location }}</td>
+                    <td class="px-6 py-4">{{ attack.get_attack_type_display }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div id="no-attacks-message" class="px-6 py-4 text-center text-gray-500 {% if latest_attacks %}hidden{% endif %}">
+            Listening for new attacks...
+        </div>
+    </div>
+
+{% else %}
+    <div class="text-center bg-white dark:bg-gray-800 p-10 rounded-lg">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.286zm0 13.036h.008v.016h-.008v-.016z" />
+        </svg>
+        <h3 class="mt-2 text-lg font-medium text-gray-900 dark:text-white">No Active Honeypots</h3>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Please start a service to begin monitoring for attacks.</p>
+        <div class="mt-6">
+            <a href="{% url 'setup' %}" class="inline-flex items-center rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                Go to Setup Page
+            </a>
+        </div>
+    </div>
+{% endif %}
+
+<script>
+    // This script only runs if services are active
+    {% if services_active %}
+    let latestAttackId = 0;
+    let chart; // Keep a reference to the chart object
+
+    // Function to fetch new attacks from our API
+    async function fetchNewAttacks() {
+        const response = await fetch(`{% url 'get-new-attacks-api' %}?latest_id=${latestAttackId}`);
+        const result = await response.json();
+        const newAttacks = result.attacks;
+
+        if (newAttacks.length > 0) {
+            const tableBody = document.getElementById('attack-table-body');
+            const noAttacksMessage = document.getElementById('no-attacks-message');
+            if(noAttacksMessage) noAttacksMessage.classList.add('hidden');
+
+            // Update latestAttackId with the newest attack from this batch
+            latestAttackId = newAttacks[0].id;
+
+            newAttacks.forEach(attack => {
+                const newRow = document.createElement('tr');
+                newRow.className = 'bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600';
+                newRow.setAttribute('data-id', attack.id);
+                
+                // Format timestamp nicely
+                const timestamp = new Date(attack.timestamp).toLocaleString();
+
+                newRow.innerHTML = `
+                    <td class="px-6 py-4">${timestamp}</td>
+                    <td class="px-6 py-4">${attack.source_display}</td>
+                    <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">${attack.ip_address}</td>
+                    <td class="px-6 py-4">${attack.location}</td>
+                    <td class="px-6 py-4">${attack.attack_type_display}</td>
+                `;
+                tableBody.prepend(newRow); // Prepend adds the new row to the TOP of the table
+            });
+            
+            // Optional: Limit the table to 50 rows to prevent it from getting too long
+            while (tableBody.rows.length > 50) {
+                tableBody.deleteRow(-1); // -1 removes the last row
+            }
+        }
+    }
+
+    // Function to update the chart and stats
+    async function updateDashboardData() {
+        // Update Chart
+        const response = await fetch("{% url 'attack-data-api' %}");
+        const chartData = await response.json();
+        if (chart) {
+            chart.updateSeries([{ data: chartData.data }]);
+            chart.updateOptions({ xaxis: { categories: chartData.labels } });
+        }
+
+        // We can't easily update the stats without another API call,
+        // so for now we'll focus on the live table and chart.
+    }
+
+    // This runs when the page is fully loaded
+    window.addEventListener("load", async function () {
+        // Set the initial latestAttackId from the first row of the table
+        const firstRow = document.querySelector('#attack-table-body tr');
+        if (firstRow) {
+            latestAttackId = parseInt(firstRow.getAttribute('data-id'));
+        }
+
+        // Fetch new attacks every 2.5 seconds
+        setInterval(fetchNewAttacks, 2500);
+
+        // Update the chart every 10 seconds (less frequent than table updates)
+        setInterval(updateDashboardData, 10000);
+
+        // Initial Chart Drawing
+        const chartResponse = await fetch("{% url 'attack-data-api' %}");
+        const chartData = await chartResponse.json();
+
+        if (chartData.labels.length > 0) {
+            const options = { series: [{ name: "Attacks", data: chartData.data }], chart: { type: 'bar', height: 350, toolbar: { show: false } }, plotOptions: { bar: { horizontal: false, columnWidth: '55%', borderRadius: 4 } }, dataLabels: { enabled: false }, xaxis: { categories: chartData.labels, labels: { style: { colors: '#9CA3AF', fontSize: '12px' } } }, yaxis: { title: { text: 'Number of Attacks', style: { color: '#9CA3AF' } }, labels: { style: { colors: '#9CA3AF', fontSize: '12px' } } }, fill: { opacity: 1 }, tooltip: { y: { formatter: (val) => val + " attacks" } } };
+            const chartElement = document.getElementById("bar-chart");
+            if (chartElement && typeof ApexCharts !== 'undefined') {
+                chart = new ApexCharts(chartElement, options);
+                chart.render();
+            }
+        }
+    });
+    {% endif %}
+</script>
 
 {% endblock %}

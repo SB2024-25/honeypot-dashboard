@@ -30,16 +30,17 @@ ALLOWED_HOSTS = []
 
 # Application definition
 
+# honeypot/settings.py
+
 INSTALLED_APPS = [
     'django.contrib.admin',
-    # 'honeypot.models.SetupStatus'
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # 'honeypot.apps.setupConfig',
-    'honeypot',
+
+    'attack_simulator',
 ]
 
 MIDDLEWARE = [
