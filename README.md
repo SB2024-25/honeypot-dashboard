@@ -1,92 +1,106 @@
+# Honeypot Dashboard
+
 <div align="center">
-  <h1>Honeypot Dashboard</h1>
-  <p>A Django-based honeypot project designed to simulate, monitor, and visualize malicious activity in a controlled environment, featuring a live-updating dashboard.</p>
+  <p>A user-friendly web application that simulates and visualizes network and web-based cyber attacks in real-time.</p>
   <img src="https://forthebadge.com/images/badges/made-with-python.svg">
   <img src="https://forthebadge.com/images/badges/built-with-love.svg">
-  <br><br>
-  <a href="https://github.com/SB2024-25/honeypot-dashboard/pulse">
-    <img alt="Last commit" src="https://img.shields.io/github/last-commit/SB2024-25/honeypot-dashboard?style=for-the-badge&logo=starship&color=8bd5ca&logoColor=D9E0EE&labelColor=302D41" />
-  </a>
-  <a href="https://github.com/SB2024-25/honeypot-dashboard/stargazers">
-    <img alt="Stars" src="https://img.shields.io/github/stars/SB2024-25/honeypot-dashboard?style=for-the-badge&logo=starship&color=c69ff5&logoColor=D9E0EE&labelColor=302D41" />
-  </a>
-  <a href="https://github.com/SB2024-25/honeypot-dashboard/issues">
-    <img alt="Issues" src="https://img.shields.io/github/issues/SB2024-25/honeypot-dashboard?style=for-the-badge&logo=bilibili&color=F5E0DC&logoColor=D9E0EE&labelColor=302D41" />
-  </a>
 </div>
 
-# Description
-This honeypot project provides cybersecurity enthusiasts and professionals with a powerful tool to study attack patterns in a controlled environment. It simulates both network and web services to attract and log malicious activity, presenting the data on a dynamic, live-updating dashboard.
+## Key Features
+
+-   **Live Dashboard:** Watch simulated attacks appear on the dashboard in real-time without ever needing to refresh the page.
+-   **Background Simulation:** Starts generating realistic attack data automatically in the background as soon as a honeypot service is activated.
+-   **Data Visualization:** Includes charts and key statistics that update to reflect live attack patterns.
+-   **Service Simulation:** Mimics Network (FTP/SSH) and Web services to act as a target for simulated attacks.
+-   **Database Logging:** All attack events are reliably stored in a local database for consistency and performance.
 
 ---
 
-# Features
+## Prerequisites
 
-### Core Functionality
-- **Database Backend:** All attack data is stored in a robust SQLite database, replacing fragile log files.
-- **Live Attack Generation:** When a honeypot service is activated, a background process begins generating realistic, simulated attack data.
-- **Dynamic Dashboard:** The dashboard automatically updates in real-time to show new attacks as they are generated, without needing a page refresh.
-- **Data Visualization:** The dashboard includes aggregate statistics and a chart to visualize the distribution of different attack types.
+Before you begin, make sure you have the following software installed on your computer:
 
-### Web Honeypot
-- **Web Logging:** Simulates a vulnerable website and records all HTTP requests, IP addresses, session details, and user agents.
+-   **Python (Version 3.8 or newer):** The programming language this project is built with. You can download it from [python.org](https://www.python.org/downloads/).
+-   **Git:** The version control system used to download the project files. You can download it from [git-scm.com](https://git-scm.com/downloads/).
 
-### Network Honeypot
-- **Network Logging:** Mimics network services like FTP and SSH to detect and log connection and authentication attempts.
-- **Deceptive Environment:** Creates a deceptive environment to trap and analyze network-based attacks.
+---
 
-# Installation
+## Installation & Setup Guide
 
-1.  **Clone the repository:**
-    ```bash
-    git clone [https://github.com/SB2024-25/honeypot-dashboard.git](https://github.com/SB2024-25/honeypot-dashboard.git)
-    cd honeypot-dashboard
-    ```
+Follow these steps in your terminal (like PowerShell or Command Prompt on Windows) to get the project set up and ready to run.
 
-2.  **Set up the environment and install dependencies:**
-    ```bash
-    # Create and activate a virtual environment
-    python -m venv venv
-    .\venv\Scripts\activate
-    
-    # Install required packages
-    pip install -r requirements.txt
-    ```
+**1. Clone the Repository**
+This command downloads the project code from GitHub to your computer.
+```bash
+git clone [https://github.com/SB2024-25/honeypot-dashboard.git]
+2. Navigate into the Project Directory
 
-3.  **Configure the database and admin user:**
-    ```bash
-    python manage.py migrate
-    python manage.py createsuperuser
-    ```
-    *(You will need the admin user to log into the dashboard.)*
+Bash
 
-4.  **Start the honeypot dashboard:**
-    ```bash
-    python manage.py runserver
-    ```
-    Open the provided URL (e.g., `http://127.0.0.1:8000`) in your browser to access the dashboard.
+cd honeypot-dashboard
+3. Create a Virtual Environment
+This creates an isolated "bubble" for this project's specific Python libraries so they don't interfere with other projects.
 
-# Technology Stack
+Bash
 
-- **Django:** A high-level Python Web framework for rapid development.
-- **Flask:** A lightweight web application framework used for the web honeypot component.
-- **paramiko:** A library for making SSH2 connections.
-- **pyftpdlib:** A library for creating FTP servers.
-- **Faker:** A library for generating fake data to simulate attacks.
-- **ApexCharts.js:** A modern JavaScript charting library for data visualization.
+python -m venv venv
+4. Activate the Virtual Environment
+You must do this every time you work on the project. You'll know it's active when you see (venv) at the beginning of your terminal prompt.
 
-# Usage
-1.  Log in to the dashboard with the superuser account you created.
-2.  Navigate to the `Setup` tab.
-3.  Click the "Setup" button for either **Network** or **Website** to start the honeypot services.
-4.  Once a service is started, the background attack generator will begin.
-5.  Navigate back to the `Dashboard` to see the live attack feed and analysis.
-6.  Navigate to the `Network`, `Website`, or `Keylogger` tabs to see filtered logs for those specific sources.
+Bash
 
-# Screenshots
+.\venv\Scripts\activate
+5. Install Dependencies
+This command reads the requirements.txt file and installs all the necessary Python libraries into your virtual environment.
 
-*(Please add new screenshots of your updated dashboard here!)*
+Bash
 
-# Contributors
+pip install -r requirements.txt
+6. Set Up the Database
+This command creates the db.sqlite3 file and sets up all the necessary tables.
 
-<a href="
+Bash
+
+python manage.py migrate
+7. Create Your Admin Account
+This is the username and password you will use to log into the dashboard. Follow the prompts to create your account.
+
+Bash
+
+python manage.py createsuperuser
+Setup is now complete!
+
+How to Run and Use the Application
+1. Start the Web Server
+Make sure your virtual environment is still active ((venv) is visible). Run this command to start the main Django application.
+
+Bash
+
+python manage.py runserver
+Your terminal will show you a URL, usually http://127.0.0.1:8000/.
+
+2. Log In
+Open the URL from the previous step in your web browser. You will be greeted with a login page. Use the admin account you created during setup to log in.
+
+3. Navigate to the Setup Page
+Once logged in, use the navigation sidebar on the left to go to the Setup page.
+
+4. Activate a Honeypot Service
+On the Setup page, click the green "Setup" button for either Network or Website. This will start the honeypot service and, in the background, begin generating simulated attack data.
+
+5. View the Live Dashboard!
+Navigate back to the Dashboard. You will see statistics, a chart, and a table. Watch the "Recent Activity" table – new attacks will appear at the top automatically every few seconds!
+
+6. Stopping the Application
+To stop the entire application, go back to your terminal and press Ctrl + C.
+
+
+
+Technology Stack
+Backend: Django, Python
+
+Frontend: HTML, TailwindCSS, JavaScript, ApexCharts.js
+
+Honeypot Services: Flask, paramiko, pyftpdlib
+
+Data Simulation: Faker
