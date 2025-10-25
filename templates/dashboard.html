@@ -22,6 +22,10 @@
     </div>
 
     <div class="bg-white rounded-lg shadow dark:bg-gray-800 p-4 md:p-6 mb-6">
+        <h5 class="text-xl font-bold leading-none text-gray-900 dark:text-white me-1 mb-2">Live Attack Map</h5>
+        <div id="attackMapId" style="height: 400px; border-radius: 8px;"></div>
+    </div>
+    <div class="bg-white rounded-lg shadow dark:bg-gray-800 p-4 md:p-6 mb-6">
         <h5 class="text-xl font-bold leading-none text-gray-900 dark:text-white me-1">Live Attack Analysis</h5>
         <div id="bar-chart"></div>
     </div>
@@ -75,85 +79,170 @@
     {% if services_active %}
     let latestAttackId = 0;
     let chart; // Keep a reference to the chart object
+    let map; // Reference to the Leaflet map object
+    let markers = []; // Array to keep track of map markers
+
+    // --- Function to initialize the Leaflet map ---
+    function initializeMap() {
+        // Check if Leaflet library is loaded
+        if (typeof L === 'undefined') {
+            console.error("Leaflet library not loaded.");
+            return;
+        }
+        // Check if the map container exists
+        const mapContainer = document.getElementById('attackMapId');
+        if (!mapContainer) {
+            console.error("Map container 'attackMapId' not found.");
+            return;
+        }
+        try {
+            // Create a map centered roughly in the middle of the world
+            map = L.map('attackMapId').setView([20, 0], 2); // Center: [latitude, longitude], Zoom level
+
+            // Add a base map layer (tiles) from OpenStreetMap
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 18, // Adjusted maxZoom for typical use
+                attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+        } catch (error) {
+            console.error("Error initializing Leaflet map:", error);
+        }
+    }
+    // ----------------------------------------------------
 
     // Function to fetch new attacks from our API
     async function fetchNewAttacks() {
-        const response = await fetch(`{% url 'get-new-attacks-api' %}?latest_id=${latestAttackId}`);
-        const result = await response.json();
-        const newAttacks = result.attacks;
-
-        if (newAttacks.length > 0) {
-            const tableBody = document.getElementById('attack-table-body');
-            const noAttacksMessage = document.getElementById('no-attacks-message');
-            if(noAttacksMessage) noAttacksMessage.classList.add('hidden');
-
-            // Update latestAttackId with the newest attack from this batch
-            latestAttackId = newAttacks[0].id;
-
-            newAttacks.forEach(attack => {
-                const newRow = document.createElement('tr');
-                newRow.className = 'bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600';
-                newRow.setAttribute('data-id', attack.id);
-                
-                // Format timestamp nicely
-                const timestamp = new Date(attack.timestamp).toLocaleString();
-
-                newRow.innerHTML = `
-                    <td class="px-6 py-4">${timestamp}</td>
-                    <td class="px-6 py-4">${attack.source_display}</td>
-                    <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">${attack.ip_address}</td>
-                    <td class="px-6 py-4">${attack.location}</td>
-                    <td class="px-6 py-4">${attack.attack_type_display}</td>
-                `;
-                tableBody.prepend(newRow); // Prepend adds the new row to the TOP of the table
-            });
-            
-            // Optional: Limit the table to 50 rows to prevent it from getting too long
-            while (tableBody.rows.length > 50) {
-                tableBody.deleteRow(-1); // -1 removes the last row
+        // Make sure map initialization succeeded before fetching
+        if (typeof L === 'undefined' || !document.getElementById('attackMapId')) {
+            return;
+        }
+        try {
+            const response = await fetch(`{% url 'get-new-attacks-api' %}?latest_id=${latestAttackId}`);
+            if (!response.ok) {
+                console.error("Failed to fetch new attacks:", response.statusText);
+                return; // Stop if the fetch failed
             }
+            const result = await response.json();
+            const newAttacks = result.attacks;
+
+            if (newAttacks.length > 0) {
+                const tableBody = document.getElementById('attack-table-body');
+                const noAttacksMessage = document.getElementById('no-attacks-message');
+                if(noAttacksMessage) noAttacksMessage.classList.add('hidden');
+
+                // Update latestAttackId with the newest attack from this batch
+                latestAttackId = newAttacks[0].id;
+
+                newAttacks.forEach(attack => {
+                    // --- Add row to the table (Existing code) ---
+                    const newRow = document.createElement('tr');
+                    newRow.className = 'bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600';
+                    newRow.setAttribute('data-id', attack.id);
+                    const timestamp = new Date(attack.timestamp).toLocaleString();
+                    newRow.innerHTML = `
+                        <td class="px-6 py-4">${timestamp}</td>
+                        <td class="px-6 py-4">${attack.source_display}</td>
+                        <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">${attack.ip_address}</td>
+                        <td class="px-6 py-4">${attack.location}</td>
+                        <td class="px-6 py-4">${attack.attack_type_display}</td>
+                    `;
+                    tableBody.prepend(newRow);
+
+                    // --- NEW: Add marker to the map ---
+                    if (map && attack.latitude != null && attack.longitude != null) { // Check for null specifically
+                        try {
+                            const marker = L.marker([attack.latitude, attack.longitude]).addTo(map);
+
+                            // Add a popup to the marker
+                            marker.bindPopup(`<b>${attack.attack_type_display || 'Attack'}</b><br>${attack.ip_address || 'Unknown IP'}<br>${attack.location || 'Unknown Location'}`).openPopup();
+                            markers.push(marker); // Add to our list
+
+                            // Optional: Remove the oldest marker if we have too many
+                            if (markers.length > 20) { // Keep the latest 20 markers
+                                const oldMarker = markers.shift(); // Remove from beginning of array
+                                map.removeLayer(oldMarker); // Remove from map
+                            }
+
+                            // Briefly pan the map to the new attack
+                            map.panTo([attack.latitude, attack.longitude]);
+                        } catch (markerError) {
+                            console.error("Error adding marker:", markerError, "Attack data:", attack);
+                        }
+                    }
+                    // ------------------------------------
+                });
+
+                // Limit the table rows (Existing code)
+                while (tableBody.rows.length > 50) {
+                    tableBody.deleteRow(-1);
+                }
+            }
+        } catch (error) {
+            console.error("Error fetching or processing new attacks:", error);
         }
     }
 
-    // Function to update the chart and stats
+    // Function to update the chart and stats (Existing code)
     async function updateDashboardData() {
-        // Update Chart
-        const response = await fetch("{% url 'attack-data-api' %}");
-        const chartData = await response.json();
-        if (chart) {
-            chart.updateSeries([{ data: chartData.data }]);
-            chart.updateOptions({ xaxis: { categories: chartData.labels } });
-        }
+        try {
+            const response = await fetch("{% url 'attack-data-api' %}");
+             if (!response.ok) return;
+            const chartData = await response.json();
+            if (chart && chartData.labels && chartData.data) {
+                // Ensure chart library is ready and chart object exists
+                if (chart.updateSeries) {
+                    chart.updateSeries([{ data: chartData.data }]);
+                }
+                if (chart.updateOptions) {
+                    chart.updateOptions({ xaxis: { categories: chartData.labels } });
+                }
+            }
+            // Update stats (example, requires fetching counts via API or estimating)
+             const totalAttacksElem = document.getElementById('total-attacks-stat');
+             if (totalAttacksElem) {
+                 // Fetching actual count is better if you create an API endpoint for it
+             }
 
-        // We can't easily update the stats without another API call,
-        // so for now we'll focus on the live table and chart.
+        } catch (error) {
+            console.error("Error updating chart data:", error);
+        }
     }
 
     // This runs when the page is fully loaded
     window.addEventListener("load", async function () {
-        // Set the initial latestAttackId from the first row of the table
+        // --- Initialize the map FIRST ---
+        initializeMap();
+        // -----------------------------
+
         const firstRow = document.querySelector('#attack-table-body tr');
         if (firstRow) {
-            latestAttackId = parseInt(firstRow.getAttribute('data-id'));
+            latestAttackId = parseInt(firstRow.getAttribute('data-id')) || 0;
         }
 
         // Fetch new attacks every 2.5 seconds
         setInterval(fetchNewAttacks, 2500);
 
-        // Update the chart every 10 seconds (less frequent than table updates)
+        // Update the chart every 10 seconds
         setInterval(updateDashboardData, 10000);
 
-        // Initial Chart Drawing
-        const chartResponse = await fetch("{% url 'attack-data-api' %}");
-        const chartData = await chartResponse.json();
+        // Initial Chart Drawing (Existing code)
+        try {
+            const chartResponse = await fetch("{% url 'attack-data-api' %}");
+            if (!chartResponse.ok) return;
+            const chartData = await chartResponse.json();
 
-        if (chartData.labels.length > 0) {
-            const options = { series: [{ name: "Attacks", data: chartData.data }], chart: { type: 'bar', height: 350, toolbar: { show: false } }, plotOptions: { bar: { horizontal: false, columnWidth: '55%', borderRadius: 4 } }, dataLabels: { enabled: false }, xaxis: { categories: chartData.labels, labels: { style: { colors: '#9CA3AF', fontSize: '12px' } } }, yaxis: { title: { text: 'Number of Attacks', style: { color: '#9CA3AF' } }, labels: { style: { colors: '#9CA3AF', fontSize: '12px' } } }, fill: { opacity: 1 }, tooltip: { y: { formatter: (val) => val + " attacks" } } };
-            const chartElement = document.getElementById("bar-chart");
-            if (chartElement && typeof ApexCharts !== 'undefined') {
-                chart = new ApexCharts(chartElement, options);
-                chart.render();
+            if (chartData.labels && chartData.labels.length > 0) {
+                 const options = { series: [{ name: "Attacks", data: chartData.data }], chart: { type: 'bar', height: 350, toolbar: { show: false } }, plotOptions: { bar: { horizontal: false, columnWidth: '55%', borderRadius: 4 } }, dataLabels: { enabled: false }, xaxis: { categories: chartData.labels, labels: { style: { colors: '#9CA3AF', fontSize: '12px' } } }, yaxis: { title: { text: 'Number of Attacks', style: { color: '#9CA3AF' } }, labels: { style: { colors: '#9CA3AF', fontSize: '12px' } } }, fill: { opacity: 1 }, tooltip: { y: { formatter: (val) => val + " attacks" } } };
+                 const chartElement = document.getElementById("bar-chart");
+                 if (chartElement && typeof ApexCharts !== 'undefined') {
+                     chart = new ApexCharts(chartElement, options);
+                     chart.render();
+                 } else {
+                     console.error("Chart element or ApexCharts library not found for initial draw.");
+                 }
             }
+        } catch(error) {
+             console.error("Error during initial chart draw:", error);
         }
     });
     {% endif %}

@@ -32,7 +32,7 @@ Follow these steps in your terminal (like PowerShell or Command Prompt on Window
 **1. Clone the Repository**
 This command downloads the project code from GitHub to your computer.
 ```bash
-git clone [https://github.com/SB2024-25/honeypot-dashboard.git]
+git clone https://github.com/SB2024-25/honeypot-dashboard.git
 2. Navigate into the Project Directory
 
 Bash

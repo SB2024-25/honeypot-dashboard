@@ -83,7 +83,6 @@
             .then(data => {
                 if (data.status === 'started') {
                     updateButton('running');
-                    serverInfo.innerText = `Flask server running at http://${data.ip}:${data.port}`;
                     // localStorage.setItem('serverStatus', 'running');
                 } else {
                     updateButton('stopped');
