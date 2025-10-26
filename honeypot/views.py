@@ -5,7 +5,7 @@ import time
 import random
 import json
 from dotenv import load_dotenv # Loads environment variables from .env file
-# Remove google.generativeai and mistralai imports
+# Removed google.generativeai and mistralai imports
 from django.shortcuts import redirect, render
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
@@ -21,15 +21,15 @@ from django.conf import settings # Import Django settings
 import geoip2.database # GeoIP library
 import geoip2.errors # Import specific GeoIP errors
 
-# --- NEW: Import Perplexity ---
-from perplexity import Client # Correct import based on official client
-# -----------------------------
+# --- Import Perplexity ---
+from perplexity import Client # Correct import for perplexityai library
+# -------------------------
 
 # --- Load environment variables ---
 load_dotenv()
 PERPLEXITY_API_KEY = os.getenv('PERPLEXITY_API_KEY') # Load Perplexity key
 
-# --- Initialize GeoIP Reader (remains the same) ---
+# --- Initialize GeoIP Reader ---
 GEOIP_DATABASE_PATH = os.path.join(settings.BASE_DIR, 'geoip_data', 'GeoLite2-City.mmdb')
 geoip_reader = None
 try:
@@ -41,15 +41,16 @@ except Exception as e:
     print(f"WARNING: Error loading GeoIP database: {e}. Location lookups will be disabled.")
 
 
-# --- Global variables (remain the same) ---
+# --- Global variables for tracking server state ---
 flask_thread = None
 flask_server = None
 ftp_thread = None
 ssh_thread = None
+# --- Global variables for the attack generator thread ---
 attack_generator_thread = None
 generator_stop_event = threading.Event()
 
-# --- Helper functions (remain the same) ---
+# --- Helper functions to check service status ---
 def is_website_honeypot_active():
     """Checks if the Flask (Website) honeypot thread is running."""
     return flask_thread is not None and flask_thread.is_alive()
@@ -60,26 +61,23 @@ def is_network_honeypot_active():
     ssh_running = ssh_thread is not None and ssh_thread.is_alive()
     return ftp_running or ssh_running
 
-# --- *** REPLACED generate_ai_attack function for Perplexity *** ---
-def generate_ai_attack(active_sources):
+# --- Perplexity AI Attack Generation Function ---
+# --- *** UPDATED generate_ai_attack function for Perplexity *** ---
+# ADD source_to_generate parameter
+def generate_ai_attack(source_to_generate): # Takes the specific source as input
     """
-    Uses the Perplexity AI official client to generate attacks.
+    Uses the Perplexity AI official client to generate attacks for a SPECIFIC source.
     Returns a dictionary with attack data or None if failed.
     """
     if not PERPLEXITY_API_KEY:
-        print("!!! Perplexity AI generation skipped: PERPLEXITY_API_KEY not found in .env file.")
+        print("!!! Perplexity AI generation skipped: PERPLEXITY_API_KEY not found.")
         return None
 
     try:
-        # Initialize Perplexity Client
         client = Client(api_key=PERPLEXITY_API_KEY)
+        model_name = "sonar-pro" # Using the model confirmed to work
 
-        
-        model_name = "sonar-pro"
-
-        source_list = ", ".join(active_sources)
-
-        # Construct the prompt for Perplexity using their message format
+        # Construct the prompt, forcing the source
         messages = [
             {
                 "role": "system",
@@ -89,41 +87,49 @@ def generate_ai_attack(active_sources):
                 "role": "user",
                 "content": f"""
                     Generate JSON for one log entry.
-                    Choose one source from: {source_list}.
-                    Use keys "source", "attack_type", "target_context", "captured_data".
-                    attack_type examples: "BruteForce", "SQLI", "PortScan", "XSS", "DDoS".
-                    captured_data should be a *brief, safe description* (e.g., 'Attempted login', 'Scan detected', 'XSS attempt', 'Traffic surge'). Do not include actual code, payloads, or passwords.
-                    Be concise. JSON output only. Example: {{"source": "Network", "attack_type": "BruteForce", "target_context": "SSH Login", "captured_data": "Attempted user: admin"}}
+                    The source MUST be "{source_to_generate}". # <<<--- FORCE THE SOURCE
+                    Use keys "source", "attack_type", "target_context", "captured_data", and "location".
+
+                    - location: MUST be a plausible real-world city and country. Be diverse.
+                    - attack_type: Choose ONE appropriate type for the "{source_to_generate}" source:
+                        - If source is Network: Choose from "BRUTEFORCE", "PORTSCAN", "SNIFFING", "MITM", "RECON", "MALWARE_PROP", "DDOS", "OTHER".
+                        - If source is Website: Choose from "SQLI", "XSS", "CSRF", "DIR_TRAV", "CMD_INJ", "FILE_INC", "XXE", "DDOS", "BRUTEFORCE", "OTHER".
+                        - If source is Keylogger: Choose from "KEYLOGGING", "CRED_HARVEST", "DATA_EXFIL", "SCREEN_CAP", "BRUTEFORCE", "OTHER".
+                    - target_context: Be specific and relevant to the attack_type.
+                    - captured_data: MUST be a *brief, safe description* relevant to the attack_type.
+                        - *Do not include actual code, payloads, passwords, or sensitive data.*
+
+                    Be concise. JSON output only. Example (ensure source matches requested "{source_to_generate}"): {{"source": "{source_to_generate}", "attack_type": "...", "target_context": "...", "captured_data": "...", "location": "..."}}
                 """,
             },
         ]
 
-        # Make the API call using the official client's chat completion method
         response = client.chat.completions.create(
             model=model_name,
             messages=messages,
-            # Check Perplexity docs if they support a 'response_format' like OpenAI/Mistral
-            # If not, we rely solely on the prompt instruction for JSON.
         )
 
         # Extract the JSON content
         if response.choices and response.choices[0].message and response.choices[0].message.content:
             json_text = response.choices[0].message.content.strip()
-            # print(f"DEBUG: Perplexity Raw Response Text: {json_text}") # Optional debug
-
             # Try to remove potential markdown formatting
             json_text = json_text.replace('```json', '').replace('```', '').strip()
+            # print(f"DEBUG: AI Raw JSON Text: {json_text}") # Uncomment for deep debug
 
             attack_data = json.loads(json_text)
 
             # Basic validation
-            if not all(k in attack_data for k in ["source", "attack_type", "target_context", "captured_data"]):
+            required_keys = ["source", "attack_type", "target_context", "captured_data", "location"]
+            if not all(k in attack_data for k in required_keys):
                 print(f"!!! Perplexity response missing keys: {attack_data}")
                 return None
-            if attack_data.get("source") not in active_sources:
-                 if not (attack_data.get("source") == 'Keylogger' and 'Website' in active_sources):
-                    print(f"!!! Perplexity returned invalid source: {attack_data.get('source')} for active sources {active_sources}")
-                    return None
+
+            # --- VALIDATE the AI used the CORRECT source ---
+            returned_source = attack_data.get("source")
+            if returned_source != source_to_generate:
+                print(f"!!! Perplexity returned WRONG source: Expected '{source_to_generate}', Got '{returned_source}'")
+                # Optionally, you could try calling the AI again here, or just return None
+                return None # Fail if AI didn't follow instruction
 
             return attack_data
         else:
@@ -132,7 +138,7 @@ def generate_ai_attack(active_sources):
 
     except json.JSONDecodeError as e_json:
         raw_content = "N/A"
-        try:
+        try: # Try to get raw content for logging
              if response and response.choices:
                  raw_content = response.choices[0].message.content
         except Exception:
@@ -141,72 +147,135 @@ def generate_ai_attack(active_sources):
         return None
     except Exception as e_pplx: # Catch potential errors from the perplexityai library
         print(f"!!! Perplexity AI generation failed: {type(e_pplx).__name__} - {e_pplx}")
+        if "invalid model" in str(e_pplx).lower():
+            print("!!! HINT: The model 'sonar-pro' might still be incorrect. Please verify the exact model name in Perplexity's API documentation.")
         return None
 
-
-# --- run_attack_generator function ---
+# --- *** UPDATED run_attack_generator function *** ---
 def run_attack_generator(stop_event):
     """
-    Runs in a background thread, generates attacks via AI (including location),
-    looks up GeoIP *only for coordinates*, and saves to the database faster.
+    Runs in a background thread, generates attacks via AI (forcing source based on weight),
+    looks up GeoIP, saves to DB, includes basic scenario logic, faster speed.
     """
     fake = Faker()
     print("--- Attack generator thread started ---")
     attack_count = 0
+    recent_attacks = []
+    MAX_RECENT = 10
+    FOLLOW_UP_CHANCE = 0.0
 
     while not stop_event.is_set():
         try:
-            active_sources = []
-            if is_website_honeypot_active():
-                active_sources.extend(['Website', 'Keylogger'])
-            if is_network_honeypot_active():
-                active_sources.append('Network')
+            possible_sources = [] # List for weighted choice
+            is_website = is_website_honeypot_active()
+            is_network = is_network_honeypot_active()
 
-            if active_sources:
-                ai_generated_data = generate_ai_attack(active_sources) # Calls the Perplexity version
+            # Build the list for weighted random choice
+            if is_website:
+                # Add Website 5 times, Keylogger once for a 5:1 ratio
+                possible_sources.extend(['Website', 'Website' ,'Keylogger'])
+            if is_network:
+                possible_sources.append('Network') # Network added if active
+
+            if not possible_sources: # Skip if no services are active
+                stop_event.wait(timeout=1.0)
+                continue
+
+            # --- Determine Attack Type: Follow-up or New ---
+            ip_to_use = None
+            ai_generated_data = None # Reset ai_generated_data
+            is_follow_up = False     # Flag to track if it's a scenario follow-up
+
+            # Scenario Logic (Check for follow-up)
+            if len(recent_attacks) > 0 and random.random() < FOLLOW_UP_CHANCE:
+                last_ip, last_source, last_attack_type = random.choice(recent_attacks)
+                ip_to_use = last_ip # Use the same IP for follow-up
+                follow_up_attack_type = None
+                follow_up_source = None
+                follow_up_target = None
+
+                # Define follow-up rules
+                if last_attack_type in ['PORTSCAN', 'RECON'] and last_source == 'Network':
+                    follow_up_attack_type = 'BRUTEFORCE'
+                    follow_up_source = 'Network'
+                    follow_up_target = random.choice(['SSH Login', 'FTP Login'])
+                elif last_attack_type in ['PORTSCAN', 'RECON', 'DIR_TRAV'] and last_source == 'Website':
+                     follow_up_attack_type = random.choice(['SQLI', 'XSS', 'CMD_INJ']) # Common exploits after scanning
+                     follow_up_source = 'Website'
+                     follow_up_target = random.choice(['Search Form', 'Login API', '/product?id='])
+                # (Add more rules if needed)
+
+                if follow_up_attack_type:
+                     print(f"--- Scenario Triggered: Following up {last_attack_type} from {ip_to_use} with {follow_up_attack_type} ---")
+                     # Construct follow-up data directly (no AI call needed here)
+                     ai_generated_data = {
+                         "source": follow_up_source,
+                         "attack_type": follow_up_attack_type,
+                         "target_context": follow_up_target,
+                         "captured_data": f"Follow-up attempt after {last_attack_type}",
+                         "location": fake.city() + ", " + fake.country() # Fake location for follow-up
+                     }
+                     is_follow_up = True # Mark this as a follow-up
+
+            # If not a follow-up, choose a source based on weight and call AI
+            if not is_follow_up:
+                # --- Choose the source WE want based on weight ---
+                chosen_source_to_generate = random.choice(possible_sources)
+                # -----------------------------------------------
+
+                # --- Call AI, passing the SPECIFIC source chosen ---
+                # print(f"DEBUG: Asking AI to generate source='{chosen_source_to_generate}'") # Optional debug
+                ai_generated_data = generate_ai_attack(chosen_source_to_generate)
+                # --------------------------------------------------
 
                 if ai_generated_data:
-                    ip = fake.ipv4() # Generate random IP for mapping coordinates
-                    # --- GET LOCATION FROM AI ---
-                    location_name = ai_generated_data.get('location', 'Unknown') # Use AI location
-                    # --------------------------
-                    latitude = None
-                    longitude = None
-
-                    # --- GeoIP lookup is now ONLY for coordinates ---
-                    if geoip_reader:
-                        try:
-                            response = geoip_reader.city(ip)
-                            if response and response.location:
-                                latitude = response.location.latitude
-                                longitude = response.location.longitude
-                            # We don't overwrite location_name here anymore
-                        except geoip2.errors.AddressNotFoundError:
-                            pass # IP not in DB
-                        except Exception as e_geoip:
-                            print(f"!!! GeoIP lookup error for {ip}: {e_geoip}")
-                    # -----------------------------------------------
-
-                    AttackLog.objects.create(
-                        ip_address=ip,
-                        location=location_name, # Save the AI-generated location name
-                        source=ai_generated_data.get('source'),
-                        attack_type=ai_generated_data.get('attack_type'),
-                        target_context=ai_generated_data.get('target_context'),
-                        captured_data=ai_generated_data.get('captured_data')
-                    )
-                    attack_count += 1
-                    print(f"Attack #{attack_count} saved successfully. IP: {ip}, Source: {ai_generated_data.get('source')}, Loc: {location_name}") # Shows AI location
-
+                    ip_to_use = fake.ipv4() # Generate a new IP for random attacks
                 else:
-                    print("AI generation failed or returned None. Skipping this iteration.")
+                    # AI failed for the chosen source, print message and skip iteration
+                    print(f"AI generation failed for requested source '{chosen_source_to_generate}'. Skipping...")
+                    # Optional: Add a small delay here if AI fails frequently
+                    # time.sleep(1)
+                    continue # Skip to next loop iteration
 
-            if stop_event.is_set():
-                 break
+            # --- Process and Save Attack (Runs for both AI-generated and follow-up) ---
+            if ai_generated_data and ip_to_use:
+                location_name = ai_generated_data.get('location', 'Unknown Location')
+                latitude = None
+                longitude = None
 
+                # GeoIP lookup for map coordinates based on ip_to_use
+                if geoip_reader:
+                    try:
+                        response = geoip_reader.city(ip_to_use)
+                        if response and response.location:
+                            latitude = response.location.latitude
+                            longitude = response.location.longitude
+                    except geoip2.errors.AddressNotFoundError:
+                        pass
+                    except Exception as e_geoip:
+                        print(f"!!! GeoIP lookup error for {ip_to_use}: {e_geoip}")
 
-            stop_event.wait(timeout=random.uniform(0.1, 0.7))
-            # --------------------
+                # Save the log
+                AttackLog.objects.create(
+                    ip_address=ip_to_use,
+                    location=location_name,
+                    source=ai_generated_data.get('source'),
+                    attack_type=ai_generated_data.get('attack_type'),
+                    target_context=ai_generated_data.get('target_context'),
+                    captured_data=ai_generated_data.get('captured_data')
+                )
+                attack_count += 1
+                print(f"Attack #{attack_count} saved. IP: {ip_to_use}, Source: {ai_generated_data.get('source')}, Loc: {location_name}")
+
+                # --- Update recent attacks list ---
+                new_attack_info = (ip_to_use, ai_generated_data.get('source'), ai_generated_data.get('attack_type'))
+                recent_attacks.append(new_attack_info)
+                if len(recent_attacks) > MAX_RECENT:
+                    recent_attacks.pop(0)
+
+            # --- Sleep logic (faster speed) ---
+            if stop_event.is_set(): break
+            stop_event.wait(timeout=random.uniform(0.1, 0.5))
 
         except Exception as e_main:
             print(f"!!! ERROR in attack generator loop: {e_main}")
@@ -215,39 +284,91 @@ def run_attack_generator(stop_event):
             stop_event.wait(timeout=10)
 
     print(f"--- Attack generator thread stopped after saving {attack_count} attacks ---")
+    
+
+# Add near your other API views
+
+def get_stats_data_api(request):
+    """
+    API endpoint to return current attack statistics (total, unique IPs).
+    """
+    total_attacks = 0
+    unique_attackers = 0
+    active_sources = [] # Determine active sources again
+
+    if is_website_honeypot_active():
+        active_sources.extend(['Website', 'Keylogger'])
+    if is_network_honeypot_active():
+        active_sources.append('Network')
+
+    if active_sources:
+        # Query database for current counts based on active sources
+        total_attacks = AttackLog.objects.filter(source__in=active_sources).count()
+        unique_attackers = AttackLog.objects.filter(source__in=active_sources).values('ip_address').distinct().count()
+
+    stats_data = {
+        'total_attacks': total_attacks,
+        'unique_attackers': unique_attackers,
+    }
+    return JsonResponse(stats_data)
+
+def attack_source_data(request):
+    """
+    Provides data for the source distribution pie chart.
+    Counts occurrences of each attack source.
+    """
+    active_sources = []
+    if is_website_honeypot_active():
+        active_sources.extend(['Website', 'Keylogger'])
+    if is_network_honeypot_active():
+        active_sources.append('Network')
+
+    data = []
+    if active_sources:
+        # Query the database, group by 'source', count each group
+        data = AttackLog.objects.filter(source__in=active_sources) \
+                                .values('source') \
+                                .annotate(count=Count('source')) \
+                                .order_by('-count') # Order ensures slices are somewhat consistent
+
+    # Get the full display names (e.g., 'Website Honeypot')
+    source_map = dict(AttackLog.SOURCE_CHOICES)
+    labels = [source_map.get(item['source'], item['source']) for item in data]
+    counts = [item['count'] for item in data]
+
+    chart_data = {
+        'labels': labels,
+        'data': counts,
+    }
+    return JsonResponse(chart_data)
 
 # --- Helper functions to start/stop the generator (remain the same) ---
-# ... start_generator_if_needed(), stop_generator_if_idle() ...
 def start_generator_if_needed():
     """Starts the attack generator thread if it's not already running."""
     global attack_generator_thread
     if attack_generator_thread is None or not attack_generator_thread.is_alive():
         print("--- Starting attack generator thread ---")
         generator_stop_event.clear()
-        # Use daemon=True so thread exits if main app exits unexpectedly
         attack_generator_thread = threading.Thread(target=run_attack_generator, args=(generator_stop_event,), daemon=True)
         attack_generator_thread.start()
 
 def stop_generator_if_idle():
     """Stops the attack generator thread if no honeypot services are active."""
     global attack_generator_thread
-    # Check if ANY service is active
     if not is_website_honeypot_active() and not is_network_honeypot_active():
         if attack_generator_thread is not None and attack_generator_thread.is_alive():
             print("--- No services active. Stopping attack generator thread ---")
             generator_stop_event.set()
-            # Give the thread a moment to stop gracefully
             attack_generator_thread.join(timeout=5.0)
             if attack_generator_thread.is_alive():
                 print("!!! WARNING: Attack generator thread did not stop cleanly after 5s.")
             attack_generator_thread = None
         else:
-             # Ensure variable is cleared if thread already stopped or never started
              attack_generator_thread = None
 
 
-# === Django Views (dashboard, APIs, start/stop servers, login, logout, etc.) ===
-# ... These functions remain exactly the same as the last complete version ...
+# === Django Views ===
+
 @login_required
 def dashboard(request):
     active_sources = []
@@ -517,24 +638,46 @@ def setup(request):
 
 @login_required
 def Keylogger(request):
+    print("--- Entered Keylogger view function ---") # Debug Print 1
     service_active = is_website_honeypot_active()
-    attack_logs = AttackLog.objects.filter(source='Keylogger').order_by('-timestamp')[:200] if service_active else []
+    attack_logs = []
+    if service_active:
+         print("--- Keylogger service is active, querying database... ---") # Debug Print 2
+         attack_logs = AttackLog.objects.filter(source='Keylogger').order_by('-timestamp')[:200]
+         print(f"--- Found {len(attack_logs)} Keylogger logs ---") # Debug Print 3
+    else:
+         print("--- Keylogger service is NOT active ---") # Debug Print 4
     context = {'active': 'Keylogger', 'attack_logs': attack_logs, 'source_name': 'Keylogger', 'service_is_active': service_active }
     return render(request, "network.html", context)
 
 @login_required
 def network(request):
+    print("--- Entered network view function ---") # Debug Print 1
     service_active = is_network_honeypot_active()
-    attack_logs = AttackLog.objects.filter(source='Network').order_by('-timestamp')[:200] if service_active else []
+    attack_logs = []
+    if service_active:
+         print("--- Network service is active, querying database... ---") # Debug Print 2
+         attack_logs = AttackLog.objects.filter(source='Network').order_by('-timestamp')[:200]
+         print(f"--- Found {len(attack_logs)} Network logs ---") # Debug Print 3
+    else:
+         print("--- Network service is NOT active ---") # Debug Print 4
     context = { 'active': 'network', 'attack_logs': attack_logs, 'source_name': 'Network Honeypot', 'service_is_active': service_active }
     return render(request, "network.html", context)
 
 @login_required
 def website(request):
+    print("--- Entered website view function ---") # Debug Print 1
     service_active = is_website_honeypot_active()
-    attack_logs = AttackLog.objects.filter(source='Website').order_by('-timestamp')[:200] if service_active else []
+    attack_logs = []
+    if service_active:
+         print("--- Website service is active, querying database... ---") # Debug Print 2
+         attack_logs = AttackLog.objects.filter(source='Website').order_by('-timestamp')[:200]
+         print(f"--- Found {len(attack_logs)} Website logs ---") # Debug Print 3
+    else:
+         print("--- Website service is NOT active ---") # Debug Print 4
     context = { 'active': 'website', 'attack_logs': attack_logs, 'source_name': 'Website Honeypot', 'service_is_active': service_active }
     return render(request, "network.html", context)
+
 
 def handlelogin(request):
     if request.method=="POST":

@@ -2,63 +2,53 @@
 from django.db import models
 
 class AttackLog(models.Model):
+    # --- EXPANDED ATTACK TYPES (Corrected List) ---
     ATTACK_TYPE_CHOICES = [
+        # Common Web Attacks
         ('SQLI', 'SQL Injection'),
-        ('DDoS', 'DDoS'),
-        ('BruteForce', 'Brute Force'),
-        ('PortScan', 'Port Scan'),
         ('XSS', 'Cross-Site Scripting'),
+        ('CSRF', 'Cross-Site Request Forgery'),
+        ('DIR_TRAV', 'Directory Traversal'),
+        ('CMD_INJ', 'Command Injection'),
+        ('FILE_INC', 'File Inclusion'),
+        ('XXE', 'XML External Entity'),
+        # Common Network Attacks
+        ('BRUTEFORCE', 'Brute Force'), # Applicable to many services
+        ('PORTSCAN', 'Port Scan'),
+        ('SNIFFING', 'Packet Sniffing'), # Simulation description
+        ('MITM', 'Man-in-the-Middle'), # Simulation description
+        ('RECON', 'Network Reconnaissance'),
+        ('MALWARE_PROP', 'Malware Propagation'), # Simulation description
+        # Common Endpoint/Keylogger Attacks
+        ('KEYLOGGING', 'Keylogging'),
+        ('CRED_HARVEST', 'Credential Harvesting'),
+        ('DATA_EXFIL', 'Data Exfiltration'),
+        ('SCREEN_CAP', 'Screen Capture'), # Simulation description
+        # General / Other
+        ('DDOS', 'DDoS'), # Can target web or network
+        ('OTHER', 'Other Suspicious Activity'),
     ]
-    
-    # --- ADD THIS NEW FIELD ---
+
+    # --- SOURCE CHOICES (Defined BEFORE use) ---
     SOURCE_CHOICES = [
         ('Network', 'Network Honeypot'),
         ('Website', 'Website Honeypot'),
         ('Keylogger', 'Keylogger'),
     ]
-    # -------------------------
 
+    # --- Model Fields ---
     ip_address = models.GenericIPAddressField()
     location = models.CharField(max_length=100)
-    attack_type = models.CharField(max_length=10, choices=ATTACK_TYPE_CHOICES)
+    # Use the expanded choices and increased max_length
+    attack_type = models.CharField(max_length=15, choices=ATTACK_TYPE_CHOICES) # Increased max_length
     timestamp = models.DateTimeField(auto_now_add=True)
-    
-    # --- AND THIS LINE ---
+    # Use the SOURCE_CHOICES defined above
     source = models.CharField(max_length=10, choices=SOURCE_CHOICES, default='Network')
-    # --------------------
-    
-    from django.db import models
+    # Fields for specific attack details
+    captured_data = models.CharField(max_length=255, blank=True, null=True, help_text="Description or data related to the attack.")
+    target_context = models.CharField(max_length=100, blank=True, null=True, help_text="The field, service, or area targeted.")
 
-class AttackLog(models.Model):
-    # This is the list of choices for the attack_type field
-    ATTACK_TYPE_CHOICES = [
-        ('SQLI', 'SQL Injection'),
-        ('DDoS', 'DDoS'),
-        ('BruteForce', 'Brute Force'),
-        ('PortScan', 'Port Scan'),
-        ('XSS', 'Cross-Site Scripting'),
-    ]
-    
-    # --- THIS IS THE CORRECT PLACEMENT for SOURCE_CHOICES ---
-    # It must be defined before the 'source' field below uses it.
-    SOURCE_CHOICES = [
-        ('Network', 'Network Honeypot'),
-        ('Website', 'Website Honeypot'),
-        ('Keylogger', 'Keylogger'),
-    ]
-    # -------------------------------------------------------------
-
-    ip_address = models.GenericIPAddressField()
-    location = models.CharField(max_length=100)
-    attack_type = models.CharField(max_length=10, choices=ATTACK_TYPE_CHOICES)
-    timestamp = models.DateTimeField(auto_now_add=True)
-    
-    # This field now correctly uses the SOURCE_CHOICES list from above
-    source = models.CharField(max_length=10, choices=SOURCE_CHOICES, default='Network')
-    
-    # These are the fields for the keylogger data
-    captured_data = models.CharField(max_length=255, blank=True, null=True, help_text="The actual keystrokes or data captured.")
-    target_context = models.CharField(max_length=100, blank=True, null=True, help_text="The field or area where data was captured (e.g., username field).")
-
+    # String representation for admin and logs
     def __str__(self):
         return f'{self.get_attack_type_display()} from {self.ip_address} via {self.get_source_display()}'
+    

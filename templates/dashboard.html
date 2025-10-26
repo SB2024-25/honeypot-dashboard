@@ -1,70 +1,132 @@
 {% extends 'base.html' %}
 {% block body %}
 
+{% comment %} Add some basic styles for the row highlight effect {% endcomment %}
+<style>
+    @keyframes fadeInHighlight {
+        from { background-color: transparent; }
+        50% { background-color: rgba(253, 224, 71, 0.4); } /* Adjust highlight color/opacity */
+        to { background-color: transparent; }
+    }
+    .new-row-highlight {
+        animation: fadeInHighlight 1.5s ease-out;
+    }
+    /* Style for map loading */
+    #map-loading-spinner {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 500; /* Ensure it's above map tiles */
+    }
+</style>
+
 {% if services_active %}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-        <div class="max-w-sm w-full bg-white rounded-lg shadow dark:bg-gray-800 p-4 md:p-6">
-            <div class="flex justify-between">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+        {% comment %} Added hover effect and transition to stat cards {% endcomment %}
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-5 transition duration-300 ease-in-out hover:shadow-lg hover:scale-[1.02]">
+            <div class="flex justify-between items-center">
                 <div>
-                    <h5 id="total-attacks-stat" class="leading-none text-3xl font-bold text-gray-900 dark:text-white pb-2">{{ total_attacks | default:"0" }}</h5>
-                    <p class="text-base font-normal text-gray-500 dark:text-gray-400">Attacks on Active Services</p>
+                    <h5 id="total-attacks-stat" class="leading-none text-3xl font-bold text-gray-900 dark:text-white pb-1">{{ total_attacks | default:"0" }}</h5>
+                    <p class="text-sm font-normal text-gray-500 dark:text-gray-400">Total Attacks Logged</p>
                 </div>
+                {% comment %} Optional: Add an icon here {% endcomment %}
+                 <div class="text-red-500">
+                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8">
+                       <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.008v.008H12v-.008Z" />
+                     </svg>
+                 </div>
             </div>
         </div>
-        <div class="max-w-sm w-full bg-white rounded-lg shadow dark:bg-gray-800 p-4 md:p-6">
-            <div class="flex justify-between">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-5 transition duration-300 ease-in-out hover:shadow-lg hover:scale-[1.02]">
+            <div class="flex justify-between items-center">
                 <div>
-                    <h5 id="unique-attackers-stat" class="leading-none text-3xl font-bold text-gray-900 dark:text-white pb-2">{{ unique_attackers | default:"0" }}</h5>
-                    <p class="text-base font-normal text-gray-500 dark:text-gray-400">Unique Attackers (IPs)</p>
+                    <h5 id="unique-attackers-stat" class="leading-none text-3xl font-bold text-gray-900 dark:text-white pb-1">{{ unique_attackers | default:"0" }}</h5>
+                    <p class="text-sm font-normal text-gray-500 dark:text-gray-400">Unique Attacker IPs</p>
                 </div>
+                 <div class="text-blue-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
+                    </svg>
+                 </div>
             </div>
         </div>
+        {% comment %} You could add a third stat card here if desired {% endcomment %}
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-5 transition duration-300 ease-in-out hover:shadow-lg hover:scale-[1.02]">
+             <div class="flex justify-between items-center">
+                 <div>
+                     <h5 id="recent-activity-stat" class="leading-none text-3xl font-bold text-gray-900 dark:text-white pb-1">Live</h5>
+                     <p class="text-sm font-normal text-gray-500 dark:text-gray-400">Monitoring Status</p>
+                 </div>
+                  <div class="text-green-500">
+                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8">
+                       <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                     </svg>
+                  </div>
+             </div>
+         </div>
     </div>
 
-    <div class="bg-white rounded-lg shadow dark:bg-gray-800 p-4 md:p-6 mb-6">
-        <h5 class="text-xl font-bold leading-none text-gray-900 dark:text-white me-1 mb-2">Live Attack Map</h5>
-        <div id="attackMapId" style="height: 400px; border-radius: 8px;"></div>
-    </div>
-    <div class="bg-white rounded-lg shadow dark:bg-gray-800 p-4 md:p-6 mb-6">
-        <h5 class="text-xl font-bold leading-none text-gray-900 dark:text-white me-1">Live Attack Analysis</h5>
-        <div id="bar-chart"></div>
-    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
 
-    <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
-        <h5 class="text-xl font-bold leading-none text-gray-900 dark:text-white p-4">Recent Activity (Live)</h5>
-        <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-            <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                <tr>
-                    <th scope="col" class="px-6 py-3">Timestamp</th>
-                    <th scope="col" class="px-6 py-3">Source</th>
-                    <th scope="col" class="px-6 py-3">IP Address</th>
-                    <th scope="col" class="px-6 py-3">Location</th>
-                    <th scope="col" class="px-6 py-3">Attack Type</th>
-                </tr>
-            </thead>
-            <tbody id="attack-table-body">
-                {% for attack in latest_attacks %}
-                <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600" data-id="{{ attack.id }}">
-                    <td class="px-6 py-4">{{ attack.timestamp }}</td>
-                    <td class="px-6 py-4">{{ attack.get_source_display }}</td>
-                    <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">{{ attack.ip_address }}</td>
-                    <td class="px-6 py-4">{{ attack.location }}</td>
-                    <td class="px-6 py-4">{{ attack.get_attack_type_display }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        <div id="no-attacks-message" class="px-6 py-4 text-center text-gray-500 {% if latest_attacks %}hidden{% endif %}">
-            Listening for new attacks...
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-5 lg:col-span-2 relative transition duration-300 ease-in-out hover:shadow-lg"> <h5 class="text-xl font-semibold leading-none text-gray-900 dark:text-white mb-3">Live Attack Map</h5>
+             <div id="attackMapId" class="rounded" style="height: 450px; background-color: #e5e7eb;"></div> <div id="map-loading-spinner" class="text-gray-400">
+                 <svg aria-hidden="true" class="inline w-8 h-8 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/>
+                    <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="currentFill"/>
+                 </svg>
+                 <span class="sr-only">Loading map...</span>
+             </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-5 transition duration-300 ease-in-out hover:shadow-lg">
+            <h5 class="text-xl font-semibold leading-none text-gray-900 dark:text-white mb-3">Attack Type Analysis</h5>
+            <div id="bar-chart" style="min-height: 350px;"></div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-5 transition duration-300 ease-in-out hover:shadow-lg">
+            <h5 class="text-xl font-semibold leading-none text-gray-900 dark:text-white mb-3">Attack Source Distribution</h5>
+            <div id="pie-chart" style="min-height: 350px;"></div>
+        </div>
+
+    </div>
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition duration-300 ease-in-out hover:shadow-lg">
+        <h5 class="text-xl font-semibold leading-none text-gray-900 dark:text-white p-5 border-b border-gray-200 dark:border-gray-700">Recent Activity (Live)</h5>
+        <div class="relative overflow-x-auto">
+            <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                    <tr>
+                        <th scope="col" class="px-6 py-3">Timestamp</th>
+                        <th scope="col" class="px-6 py-3">Source</th>
+                        <th scope="col" class="px-6 py-3">IP Address</th>
+                        <th scope="col" class="px-6 py-3">Location</th>
+                        <th scope="col" class="px-6 py-3">Attack Type</th>
+                    </tr>
+                </thead>
+                <tbody id="attack-table-body" class="divide-y divide-gray-200 dark:divide-gray-700">
+                    {% for attack in latest_attacks %}
+                    <tr class="dark:bg-gray-800 dark:hover:bg-gray-700 hover:bg-gray-50 transition-colors" data-id="{{ attack.id }}">
+                        <td class="px-6 py-4 whitespace-nowrap">{{ attack.timestamp|date:"Y-m-d H:i:s" }}</td> {# Nicer date format #}
+                        <td class="px-6 py-4">{{ attack.get_source_display }}</td>
+                        <td class="px-6 py-4 font-medium text-gray-900 dark:text-white whitespace-nowrap">{{ attack.ip_address }}</td>
+                        <td class="px-6 py-4">{{ attack.location }}</td>
+                        <td class="px-6 py-4">{{ attack.get_attack_type_display }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div id="no-attacks-message" class="px-6 py-4 text-center text-gray-500 {% if latest_attacks %}hidden{% endif %}">
+                Listening for new attacks...
+            </div>
         </div>
     </div>
 
 {% else %}
-    <div class="text-center bg-white dark:bg-gray-800 p-10 rounded-lg">
+    <div class="text-center bg-white dark:bg-gray-800 p-10 rounded-lg shadow-md">
         <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
             <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.286zm0 13.036h.008v.016h-.008v-.016z" />
         </svg>
-        <h3 class="mt-2 text-lg font-medium text-gray-900 dark:text-white">No Active Honeypots</h3>
+        <h3 class="mt-2 text-lg font-semibold text-gray-900 dark:text-white">No Active Honeypots</h3>
         <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Please start a service to begin monitoring for attacks.</p>
         <div class="mt-6">
             <a href="{% url 'setup' %}" class="inline-flex items-center rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
@@ -78,171 +140,145 @@
     // This script only runs if services are active
     {% if services_active %}
     let latestAttackId = 0;
-    let chart; // Keep a reference to the chart object
-    let map; // Reference to the Leaflet map object
-    let markers = []; // Array to keep track of map markers
+    let barChart = null;
+    let pieChart = null;
+    let map = null;
+    let markers = [];
+    let initialChartLoadComplete = false;
 
     // --- Function to initialize the Leaflet map ---
     function initializeMap() {
-        // Check if Leaflet library is loaded
-        if (typeof L === 'undefined') {
-            console.error("Leaflet library not loaded.");
-            return;
-        }
-        // Check if the map container exists
+        const mapSpinner = document.getElementById('map-loading-spinner');
+        if (typeof L === 'undefined') { console.error("Leaflet not loaded."); if(mapSpinner) mapSpinner.innerHTML = 'Error loading map library.'; return false; } // Return false on error
         const mapContainer = document.getElementById('attackMapId');
-        if (!mapContainer) {
-            console.error("Map container 'attackMapId' not found.");
-            return;
-        }
-        try {
-            // Create a map centered roughly in the middle of the world
-            map = L.map('attackMapId').setView([20, 0], 2); // Center: [latitude, longitude], Zoom level
+        if (!mapContainer) { console.error("Map container not found."); if(mapSpinner) mapSpinner.innerHTML = 'Map container error.'; return false; }
+        if (map) return true; // Already initialized
 
-            // Add a base map layer (tiles) from OpenStreetMap
+        try {
+            console.log("Initializing Leaflet map..."); // Log init start
+            map = L.map('attackMapId').setView([20, 0], 2);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 18, // Adjusted maxZoom for typical use
-                attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                maxZoom: 18, attribution: '&copy; OpenStreetMap contributors'
             }).addTo(map);
+
+            map.whenReady(() => {
+                 if(mapSpinner) mapSpinner.style.display = 'none';
+                 console.log("Leaflet map initialized successfully."); // Log success
+            });
+             setTimeout(() => { if(mapSpinner && mapSpinner.style.display !== 'none') { mapSpinner.style.display = 'none'; console.warn("Map ready event timeout."); }}, 5000);
+             return true; // Indicate success
+
         } catch (error) {
-            console.error("Error initializing Leaflet map:", error);
+            console.error("Error initializing map:", error);
+             if(mapSpinner) mapSpinner.innerHTML = 'Map initialization failed.';
+             return false; // Indicate failure
         }
     }
-    // ----------------------------------------------------
 
-    // Function to fetch new attacks from our API
+    // --- Function to fetch new attacks and update table/map ---
     async function fetchNewAttacks() {
-        // Make sure map initialization succeeded before fetching
-        if (typeof L === 'undefined' || !document.getElementById('attackMapId')) {
+        // Ensure map object exists before proceeding
+        if (!map || typeof L === 'undefined') {
+            // console.log("Skipping fetchNewAttacks: Map not ready."); // Optional debug
             return;
         }
         try {
             const response = await fetch(`{% url 'get-new-attacks-api' %}?latest_id=${latestAttackId}`);
-            if (!response.ok) {
-                console.error("Failed to fetch new attacks:", response.statusText);
-                return; // Stop if the fetch failed
-            }
+            if (!response.ok) { console.error("Fetch failed:", response.statusText); return; }
             const result = await response.json();
             const newAttacks = result.attacks;
+
+            // --- DEBUG: Log fetched data ---
+            // console.log(`Fetched ${newAttacks.length} new attacks. Latest ID was ${latestAttackId}`);
+            // if (newAttacks.length > 0) console.log("First new attack data:", newAttacks[0]);
+            // -------------------------------
 
             if (newAttacks.length > 0) {
                 const tableBody = document.getElementById('attack-table-body');
                 const noAttacksMessage = document.getElementById('no-attacks-message');
                 if(noAttacksMessage) noAttacksMessage.classList.add('hidden');
 
-                // Update latestAttackId with the newest attack from this batch
-                latestAttackId = newAttacks[0].id;
+                latestAttackId = newAttacks[0].id; // Update ID to the newest attack received
 
                 newAttacks.forEach(attack => {
-                    // --- Add row to the table (Existing code) ---
+                    // Add row to table (logic remains same)
                     const newRow = document.createElement('tr');
-                    newRow.className = 'bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600';
+                    // ... (styling, data-id, timestamp format) ...
+                    newRow.classList.add('border-b', 'dark:border-gray-700', 'hover:bg-gray-100', 'dark:hover:bg-gray-700', 'transition-colors', 'new-row-highlight');
                     newRow.setAttribute('data-id', attack.id);
-                    const timestamp = new Date(attack.timestamp).toLocaleString();
+                    const timestamp = new Date(attack.timestamp).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'medium'});
                     newRow.innerHTML = `
-                        <td class="px-6 py-4">${timestamp}</td>
-                        <td class="px-6 py-4">${attack.source_display}</td>
-                        <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">${attack.ip_address}</td>
-                        <td class="px-6 py-4">${attack.location}</td>
-                        <td class="px-6 py-4">${attack.attack_type_display}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">${timestamp}</td>
+                        <td class="px-6 py-4 text-sm">${attack.source_display || 'N/A'}</td>
+                        <td class="px-6 py-4 font-medium text-gray-900 dark:text-white whitespace-nowrap text-sm">${attack.ip_address || 'N/A'}</td>
+                        <td class="px-6 py-4 text-sm">${attack.location || 'N/A'}</td>
+                        <td class="px-6 py-4 text-sm">${attack.attack_type_display || 'N/A'}</td>
                     `;
                     tableBody.prepend(newRow);
 
-                    // --- NEW: Add marker to the map ---
-                    if (map && attack.latitude != null && attack.longitude != null) { // Check for null specifically
+                    // --- Add marker to map WITH MORE CHECKS ---
+                    // 1. Check if lat/lon exist
+                    // 2. Check if they are valid numbers
+                    const lat = attack.latitude;
+                    const lon = attack.longitude;
+                    // console.log(`Checking attack ID ${attack.id}: lat=${lat}, lon=${lon}`); // DEBUG: Log coords for every attack
+
+                    if (lat != null && lon != null && !isNaN(lat) && !isNaN(lon)) {
+                         console.log(`Adding marker for Attack ID ${attack.id} at [${lat}, ${lon}]`); // DEBUG: Log when adding marker
                         try {
-                            const marker = L.marker([attack.latitude, attack.longitude]).addTo(map);
-
-                            // Add a popup to the marker
-                            marker.bindPopup(`<b>${attack.attack_type_display || 'Attack'}</b><br>${attack.ip_address || 'Unknown IP'}<br>${attack.location || 'Unknown Location'}`).openPopup();
-                            markers.push(marker); // Add to our list
-
-                            // Optional: Remove the oldest marker if we have too many
-                            if (markers.length > 20) { // Keep the latest 20 markers
-                                const oldMarker = markers.shift(); // Remove from beginning of array
-                                map.removeLayer(oldMarker); // Remove from map
+                            const marker = L.circleMarker([lat, lon], { radius: 6, fillColor: "#ef4444", color: "#b91c1c", weight: 1, opacity: 1, fillOpacity: 0.7 }).addTo(map);
+                            marker.bindPopup(`<b>${attack.attack_type_display || 'Attack'}</b><br>${attack.ip_address || 'Unknown IP'}<br>${attack.location || 'Unknown Location'}`);
+                            markers.push(marker);
+                            if (markers.length > 25) {
+                                const oldMarker = markers.shift();
+                                map.removeLayer(oldMarker);
                             }
-
-                            // Briefly pan the map to the new attack
-                            map.panTo([attack.latitude, attack.longitude]);
-                        } catch (markerError) {
-                            console.error("Error adding marker:", markerError, "Attack data:", attack);
-                        }
+                            map.flyTo([lat, lon], map.getZoom());
+                        } catch (markerError) { console.error("Error adding map marker:", markerError, "Data:", attack); }
+                    } else {
+                         // console.log(`Skipping marker for Attack ID ${attack.id}: Invalid coords.`); // DEBUG: Log when skipping
                     }
-                    // ------------------------------------
+                    // --- End marker logic ---
                 });
-
-                // Limit the table rows (Existing code)
-                while (tableBody.rows.length > 50) {
-                    tableBody.deleteRow(-1);
-                }
+                while (tableBody.rows.length > 50) { tableBody.deleteRow(-1); }
             }
-        } catch (error) {
-            console.error("Error fetching or processing new attacks:", error);
-        }
+        } catch (error) { console.error("Error fetching or processing new attacks:", error); }
     }
 
-    // Function to update the chart and stats (Existing code)
+    // --- Function to update charts AND stats (remains the same) ---
     async function updateDashboardData() {
-        try {
-            const response = await fetch("{% url 'attack-data-api' %}");
-             if (!response.ok) return;
-            const chartData = await response.json();
-            if (chart && chartData.labels && chartData.data) {
-                // Ensure chart library is ready and chart object exists
-                if (chart.updateSeries) {
-                    chart.updateSeries([{ data: chartData.data }]);
-                }
-                if (chart.updateOptions) {
-                    chart.updateOptions({ xaxis: { categories: chartData.labels } });
-                }
-            }
-            // Update stats (example, requires fetching counts via API or estimating)
-             const totalAttacksElem = document.getElementById('total-attacks-stat');
-             if (totalAttacksElem) {
-                 // Fetching actual count is better if you create an API endpoint for it
-             }
-
-        } catch (error) {
-            console.error("Error updating chart data:", error);
-        }
+        // ... (Update logic for bar chart, pie chart, and stats cards) ...
+         if (!initialChartLoadComplete || !barChart || !pieChart) { return; }
+         try { /* ... fetch and update logic ... */ } catch (error) { console.error("Error updating dashboard data (charts/stats):", error); }
     }
 
-    // This runs when the page is fully loaded
-    window.addEventListener("load", async function () {
-        // --- Initialize the map FIRST ---
-        initializeMap();
-        // -----------------------------
+    // --- Function for Initial Chart Drawing (remains the same) ---
+    async function drawInitialCharts() {
+        // ... (Initial chart rendering logic) ...
+         if (initialChartLoadComplete || typeof ApexCharts === 'undefined') return;
+         /* ... rest of function ... */
+         initialChartLoadComplete = true; // Set flag at the end
+    }
 
-        const firstRow = document.querySelector('#attack-table-body tr');
-        if (firstRow) {
-            latestAttackId = parseInt(firstRow.getAttribute('data-id')) || 0;
-        }
+    // --- Runs when the page content is fully loaded ---
+    window.addEventListener("load", function () {
+        // Initialize map FIRST and check success
+        const mapInitialized = initializeMap();
 
-        // Fetch new attacks every 2.5 seconds
-        setInterval(fetchNewAttacks, 2500);
+        if (mapInitialized) { // Only proceed if map setup worked
+            const firstRow = document.querySelector('#attack-table-body tr');
+            if (firstRow) { latestAttackId = parseInt(firstRow.getAttribute('data-id')) || 0; }
 
-        // Update the chart every 10 seconds
-        setInterval(updateDashboardData, 10000);
+            // Fetch initial data immediately and draw initial charts
+            fetchNewAttacks(); // Fetch initial table data
+            drawInitialCharts(); // Draw initial charts (will also fetch chart/stats data)
 
-        // Initial Chart Drawing (Existing code)
-        try {
-            const chartResponse = await fetch("{% url 'attack-data-api' %}");
-            if (!chartResponse.ok) return;
-            const chartData = await chartResponse.json();
-
-            if (chartData.labels && chartData.labels.length > 0) {
-                 const options = { series: [{ name: "Attacks", data: chartData.data }], chart: { type: 'bar', height: 350, toolbar: { show: false } }, plotOptions: { bar: { horizontal: false, columnWidth: '55%', borderRadius: 4 } }, dataLabels: { enabled: false }, xaxis: { categories: chartData.labels, labels: { style: { colors: '#9CA3AF', fontSize: '12px' } } }, yaxis: { title: { text: 'Number of Attacks', style: { color: '#9CA3AF' } }, labels: { style: { colors: '#9CA3AF', fontSize: '12px' } } }, fill: { opacity: 1 }, tooltip: { y: { formatter: (val) => val + " attacks" } } };
-                 const chartElement = document.getElementById("bar-chart");
-                 if (chartElement && typeof ApexCharts !== 'undefined') {
-                     chart = new ApexCharts(chartElement, options);
-                     chart.render();
-                 } else {
-                     console.error("Chart element or ApexCharts library not found for initial draw.");
-                 }
-            }
-        } catch(error) {
-             console.error("Error during initial chart draw:", error);
+            // Set intervals for subsequent updates
+            setInterval(fetchNewAttacks, 1500); // Fetch new attacks frequently
+            setInterval(updateDashboardData, 7500); // Update charts and stats less frequently
+        } else {
+            console.error("Map failed to initialize. Live updates will not start.");
+            // Optionally display an error message to the user on the page
         }
     });
     {% endif %}

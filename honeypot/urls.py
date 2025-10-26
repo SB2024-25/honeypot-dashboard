@@ -35,12 +35,21 @@ urlpatterns = [
     path('network-setup', views.network_setup, name='network_setup'),
     path('Keylogger',views.Keylogger,name="Keylogger"),
     path('website',views.website,name="website"),
+    path('api/attack-data/', views.attack_type_data, name='attack-data-api'),
+    path('api/get-new-attacks/', views.get_new_attacks_api, name='get-new-attacks-api'),
     # ... all your other urls
     path('api/attack-data/', views.attack_type_data, name='attack-data-api'),
+    path('api/attack-source-data/', views.attack_source_data, name='attack-source-data-api'),
+    path('api/attack-data/', views.attack_type_data, name='attack-data-api'),
+    path('api/get-new-attacks/', views.get_new_attacks_api, name='get-new-attacks-api'),
+    path('api/attack-source-data/', views.attack_source_data, name='attack-source-data-api'),
     
     # ADD THIS NEW LINE
     path('api/get-new-attacks/', views.get_new_attacks_api, name='get-new-attacks-api'),
 
     # URL for our new chart data API
     path('api/attack-data/', views.attack_type_data, name='attack-data-api'),
+    # --- URL LINE for the new pie chart API ---
+    path('api/attack-source-data/', views.attack_source_data, name='attack-source-data-api'),
+    path('api/get-stats-data/', views.get_stats_data_api, name='get-stats-data-api'),
 ]
