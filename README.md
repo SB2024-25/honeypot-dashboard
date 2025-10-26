@@ -117,8 +117,16 @@ Follow these commands in your terminal:
 * **Visualization:** ApexCharts.js (Charts), Leaflet.js (Map)
 * **Development:** Git, GitHub, `python-dotenv`
 
----
-
 ## Screenshots
+<img width="1919" height="828" alt="Screenshot 2025-10-26 133130" src="https://github.com/user-attachments/assets/1d0fb6b8-cb30-45d5-9282-955f685c7074" />
+<img width="1919" height="844" alt="Screenshot 2025-10-26 133124" src="https://github.com/user-attachments/assets/62deeb22-8771-4dce-9fdc-f195210f2693" />
+<img width="1639" height="727" alt="Screenshot 2025-10-26 131712" src="https://github.com/user-attachments/assets/686982cc-0c4c-4bea-abe9-c94177cc8ce4" />
+<img width="1567" height="249" alt="Screenshot 2025-10-26 124454" src="https://github.com/user-attachments/assets/3cf9e404-8afb-4485-80c5-0e66f8c91151" />
+<img width="1501" height="545" alt="Screenshot 2025-10-26 113409" src="https://github.com/user-attachments/assets/ea44b34d-1ff3-4b7a-8bd7-415515cc6dde" />
+<img width="1438" height="422" alt="Screenshot 2025-10-26 113404" src="https://github.com/user-attachments/assets/b6b68810-062e-42c6-8cf1-4c41cd8aecde" />
+<img width="1588" height="293" alt="Screenshot 2025-10-26 113355" src="https://github.com/user-attachments/assets/8894cf91-2afa-4481-a6d7-4d1a6f242e44" />
+<img width="1494" height="391" alt="Screenshot 2025-10-26 113343" src="https://github.com/user-attachments/assets/fbcae343-a950-4331-a1cd-eadac5d442da" />
+<img width="1919" height="668" alt="Screenshot 2025-10-26 133206" src="https://github.com/user-attachments/assets/ce6dad90-02c4-42b0-b660-6940f5a7f94e" />
+<img width="1916" height="800" alt="Screenshot 2025-10-26 133143" src="https://github.com/user-attachments/assets/2cbc94e6-7dde-4995-a721-e3cda4f35d91" />
 
-![alt text](<Screenshot 2025-10-26 113343.png>) ![alt text](<Screenshot 2025-10-26 113355.png>) ![alt text](<Screenshot 2025-10-26 113404.png>) ![alt text](<Screenshot 2025-10-26 113409.png>) ![alt text](<Screenshot 2025-10-26 124454.png>) ![alt text](<Screenshot 2025-10-26 131712.png>) ![alt text](<Screenshot 2025-10-26 133124.png>) ![alt text](<Screenshot 2025-10-26 133130.png>) ![alt text](<Screenshot 2025-10-26 133143.png>) ![alt text](<Screenshot 2025-10-26 133206.png>)
+
