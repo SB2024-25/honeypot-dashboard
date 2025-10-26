@@ -1,106 +1,124 @@
-# Honeypot Dashboard
+# Honeypot Dashboard (AI-Powered Simulation)
 
 <div align="center">
-  <p>A user-friendly web application that simulates and visualizes network and web-based cyber attacks in real-time.</p>
-  <img src="https://forthebadge.com/images/badges/made-with-python.svg">
-  <img src="https://forthebadge.com/images/badges/built-with-love.svg">
+  <p>A dynamic web application built with Django that simulates and visualizes network and web-based cyber attacks in real-time, powered by Perplexity AI for realistic event generation.</p>
+  <img src="https://forthebadge.com/images/badges/made-with-python.svg" alt="Made with Python">
+  <img src="https://forthebadge.com/images/badges/built-with-love.svg" alt="Built with Love">
 </div>
+
+## Project Overview
+
+This project simulates a security operations center (SOC) dashboard, providing a live feed and analysis of simulated cyber attacks. It features honeypot services for Network (SSH/FTP) and Web targets. Attack events are generated dynamically by the Perplexity AI, geolocated, and displayed on an interactive map and updating charts, offering a compelling visualization of security events.
+
+---
 
 ## Key Features
 
--   **Live Dashboard:** Watch simulated attacks appear on the dashboard in real-time without ever needing to refresh the page.
--   **Background Simulation:** Starts generating realistic attack data automatically in the background as soon as a honeypot service is activated.
--   **Data Visualization:** Includes charts and key statistics that update to reflect live attack patterns.
--   **Service Simulation:** Mimics Network (FTP/SSH) and Web services to act as a target for simulated attacks.
--   **Database Logging:** All attack events are reliably stored in a local database for consistency and performance.
+* **Live Dashboard:** Real-time updates for attack logs, map markers, statistics (total attacks, unique IPs), and charts (attack type, source distribution) without requiring page refreshes. 📊
+* **AI-Powered Attack Generation:** Utilizes the Perplexity AI API to generate a continuous stream of diverse and contextually relevant simulated attacks (Brute Force, SQLi, XSS, Port Scans, Recon, etc.) when honeypot services are active. 🤖
+* **Honeypot Service Simulation:** Includes background services mimicking Network (SSH/FTP via Paramiko/pyftpdlib) and Web (via Flask) targets.
+* **Interactive Attack Map:** Uses Leaflet.js and a GeoLite2 database to plot incoming attacks on a world map based on IP address geolocation. 🗺️
+* **Scenario Simulation:** Basic logic to generate follow-up attacks (e.g., Brute Force after a Port Scan) from the same IP address.
+* **Database Logging:** All simulated attacks are stored reliably in an SQLite database (`db.sqlite3`) managed by Django's ORM.
+* **Service Control Panel:** Simple UI to start/stop the honeypot simulation services.
+* **User Authentication:** Secured by Django's built-in user login system.
 
 ---
 
 ## Prerequisites
 
-Before you begin, make sure you have the following software installed on your computer:
+Ensure you have the following installed on your system:
 
--   **Python (Version 3.8 or newer):** The programming language this project is built with. You can download it from [python.org](https://www.python.org/downloads/).
--   **Git:** The version control system used to download the project files. You can download it from [git-scm.com](https://git-scm.com/downloads/).
+* **Python:** Version 3.8 or newer.
+* **Git:** For cloning the repository.
+* **GeoLite2 City Database:** Download the free `GeoLite2-City.mmdb` file from MaxMind ([Instructions](https://dev.maxmind.com/geoip/geolite2-free-geolocation-data)) and place it in a `geoip_data` folder within the project root.
+* **Perplexity AI API Key:** Obtain an API key from Perplexity AI ([https://perplexity.ai/](https://perplexity.ai/)).
 
 ---
 
-## Installation & Setup Guide
+## Installation & Setup
 
-Follow these steps in your terminal (like PowerShell or Command Prompt on Windows) to get the project set up and ready to run.
+Follow these commands in your terminal:
 
-**1. Clone the Repository**
-This command downloads the project code from GitHub to your computer.
-```bash
-git clone https://github.com/SB2024-25/honeypot-dashboard.git
-2. Navigate into the Project Directory
+1.  **Clone the Repository:**
+    ```bash
+    git clone [https://github.com/SB2024-25/honeypot-dashboard.git](https://github.com/SB2024-25/honeypot-dashboard.git)
+    cd honeypot-dashboard
+    ```
 
-Bash
+2.  **Create & Activate Virtual Environment:**
+    ```bash
+    python -m venv venv
+    .\venv\Scripts\activate
+    ```
+    *(On macOS/Linux, use `source venv/bin/activate`)*
 
-cd honeypot-dashboard
-3. Create a Virtual Environment
-This creates an isolated "bubble" for this project's specific Python libraries so they don't interfere with other projects.
+3.  **Install Dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    ```
+   
 
-Bash
+4.  **Place GeoIP Database:**
+    * Create a folder named `geoip_data` in the project root (where `manage.py` is).
+    * Place your downloaded `GeoLite2-City.mmdb` file inside the `geoip_data` folder.
 
-python -m venv venv
-4. Activate the Virtual Environment
-You must do this every time you work on the project. You'll know it's active when you see (venv) at the beginning of your terminal prompt.
+5.  **Configure API Key:**
+    * Create a file named `.env` in the project root.
+    * Add your Perplexity API key to this file:
+        ```dotenv
+        PERPLEXITY_API_KEY='YOUR_API_KEY_HERE'
+        ```
+    * **Important:** The `.gitignore` file ensures `.env` is NOT uploaded to GitHub.
 
-Bash
+6.  **Set Up Database:**
+    ```bash
+    python manage.py migrate
+    ```
 
-.\venv\Scripts\activate
-5. Install Dependencies
-This command reads the requirements.txt file and installs all the necessary Python libraries into your virtual environment.
+7.  **Create Admin User:**
+    ```bash
+    python manage.py createsuperuser
+    ```
+    *(Follow prompts to set username and password for the dashboard login)*
 
-Bash
+---
 
-pip install -r requirements.txt
-6. Set Up the Database
-This command creates the db.sqlite3 file and sets up all the necessary tables.
+## Running the Application
 
-Bash
+1.  **Activate Virtual Environment** (if not already active):
+    ```bash
+    .\venv\Scripts\activate
+    ```
 
-python manage.py migrate
-7. Create Your Admin Account
-This is the username and password you will use to log into the dashboard. Follow the prompts to create your account.
+2.  **Start the Django Server:**
+    ```bash
+    python manage.py runserver
+    ```
 
-Bash
+3.  **Access the Dashboard:** Open your web browser and go to `http://127.0.0.1:8000/`. Log in using the admin credentials you created.
 
-python manage.py createsuperuser
-Setup is now complete!
+4.  **Start Simulation:** Navigate to the **Setup** page via the sidebar and click "Setup" for either the **Network** or **Website** service. This will activate the corresponding honeypot simulation and start the AI attack generator.
 
-How to Run and Use the Application
-1. Start the Web Server
-Make sure your virtual environment is still active ((venv) is visible). Run this command to start the main Django application.
+5.  **Monitor:** Return to the **Dashboard** to view the live attack map, updating charts, stats, and the real-time activity log.
 
-Bash
+6.  **Stop:** Press `Ctrl+C` in the terminal where `runserver` is running to stop the application.
 
-python manage.py runserver
-Your terminal will show you a URL, usually http://127.0.0.1:8000/.
+---
 
-2. Log In
-Open the URL from the previous step in your web browser. You will be greeted with a login page. Use the admin account you created during setup to log in.
+## Technology Stack
 
-3. Navigate to the Setup Page
-Once logged in, use the navigation sidebar on the left to go to the Setup page.
+* **Backend:** Python, Django
+* **Honeypot Services:** Flask, Paramiko, pyftpdlib
+* **AI Simulation:** Perplexity AI API, `perplexityai` Python client
+* **Geolocation:** `geoip2` Python library, MaxMind GeoLite2 City database
+* **Database:** SQLite
+* **Frontend:** HTML, Tailwind CSS, JavaScript
+* **Visualization:** ApexCharts.js (Charts), Leaflet.js (Map)
+* **Development:** Git, GitHub, `python-dotenv`
 
-4. Activate a Honeypot Service
-On the Setup page, click the green "Setup" button for either Network or Website. This will start the honeypot service and, in the background, begin generating simulated attack data.
+---
 
-5. View the Live Dashboard!
-Navigate back to the Dashboard. You will see statistics, a chart, and a table. Watch the "Recent Activity" table – new attacks will appear at the top automatically every few seconds!
+## Screenshots
 
-6. Stopping the Application
-To stop the entire application, go back to your terminal and press Ctrl + C.
-
-
-
-Technology Stack
-Backend: Django, Python
-
-Frontend: HTML, TailwindCSS, JavaScript, ApexCharts.js
-
-Honeypot Services: Flask, paramiko, pyftpdlib
-
-Data Simulation: Faker
+![alt text](<Screenshot 2025-10-26 113343.png>) ![alt text](<Screenshot 2025-10-26 113355.png>) ![alt text](<Screenshot 2025-10-26 113404.png>) ![alt text](<Screenshot 2025-10-26 113409.png>) ![alt text](<Screenshot 2025-10-26 124454.png>) ![alt text](<Screenshot 2025-10-26 131712.png>) ![alt text](<Screenshot 2025-10-26 133124.png>) ![alt text](<Screenshot 2025-10-26 133130.png>) ![alt text](<Screenshot 2025-10-26 133143.png>) ![alt text](<Screenshot 2025-10-26 133206.png>)
