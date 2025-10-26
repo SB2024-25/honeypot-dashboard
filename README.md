@@ -246,11 +246,7 @@ python manage.py migrate --run-syncdb
 
 ## 📸 Screenshots
 
-* **Live Dashboard**: Real-time attack monitoring with AI analysis
-* **Interactive Map**: Global attack visualization with live markers  
-* **Security Analytics**: Professional charts and statistics
-* **AI Analysis**: Detailed cybersecurity reports with export
-* **Service Control**: Easy honeypot management interface
+<img width="1916" height="874" alt="Screenshot 2025-10-26 223855" src="https://github.com/user-attachments/assets/6ec33d7e-a82c-44da-9782-00d3449b44e1" />
 
 ---
 
