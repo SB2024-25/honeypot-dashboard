@@ -36,6 +36,12 @@ urlpatterns = [
     path('Keylogger',views.Keylogger,name="Keylogger"),
     path('website',views.website,name="website"),
     path('api/attack-data/', views.attack_type_data, name='attack-data-api'),
+    path('', views.dashboard, name="dashboard"),
+    path('analyze/', views.analyze, name="analyze"),
+    path('api/analyze/', views.analyze_api, name='analyze_api'),
+    path('analyze/', views.analyze, name='analyze'),  # (if not already added)
+
+
     path('api/get-new-attacks/', views.get_new_attacks_api, name='get-new-attacks-api'),
     # ... all your other urls
     path('api/attack-data/', views.attack_type_data, name='attack-data-api'),
@@ -43,9 +49,13 @@ urlpatterns = [
     path('api/attack-data/', views.attack_type_data, name='attack-data-api'),
     path('api/get-new-attacks/', views.get_new_attacks_api, name='get-new-attacks-api'),
     path('api/attack-source-data/', views.attack_source_data, name='attack-source-data-api'),
-    
+    path('api/get-stats-data/', views.get_stats_data_api, name='get-stats-data-api'),
+    path('api/analyze-attack/', views.analyze_attack_api, name='analyze-attack-api'),
     # ADD THIS NEW LINE
     path('api/get-new-attacks/', views.get_new_attacks_api, name='get-new-attacks-api'),
+    path('analyze/', views.analyze, name='analyze'),          # serves analyze.html template
+    path('api/analyze/', views.analyze_api, name='analyze_api'),  # API endpoint returning AI summary JSON
+
 
     # URL for our new chart data API
     path('api/attack-data/', views.attack_type_data, name='attack-data-api'),

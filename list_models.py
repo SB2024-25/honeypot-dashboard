@@ -1,29 +1,24 @@
 import os
 import google.generativeai as genai
 from dotenv import load_dotenv
+load_dotenv()  # Loads variables from .env file into environment
 
-# Load the API key from your .env file
-load_dotenv()
-GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY')
 
-if GOOGLE_API_KEY:
-    genai.configure(api_key=GOOGLE_API_KEY)
-    print("API Key configured. Listing models...\n")
+def list_models():
+    api_key = os.getenv("GOOGLE_API_KEY")  # Make sure your .env or env var has this set
+    if not api_key:
+        print("GOOGLE_API_KEY not found in environment variables.")
+        return
+
+    genai.configure(api_key=api_key)
 
     try:
-        # Iterate through the available models
-        for m in genai.list_models():
-            # Check if the model supports the 'generateContent' method we need
-            if 'generateContent' in m.supported_generation_methods:
-                print(f"Model Name: {m.name}")
-                # print(f"  Supported Methods: {m.supported_generation_methods}")
-                # print(f"  Description: {m.description}\n")
-        print("\nFinished listing models.")
-
+        models = genai.list_models()
+        print("Available Google Generative AI models:")
+        for model in models:
+            print(f"- {model.name}")
     except Exception as e:
-        print(f"!!! An error occurred while listing models: {e}")
-        print("!!! Please double-check your API key and network connection.")
+        print(f"Error listing models: {e}")
 
-else:
-    print("!!! ERROR: GOOGLE_API_KEY not found in your .env file.")
-    print("!!! Please make sure the .env file exists in the same directory and contains the key.")
+if __name__ == "__main__":
+    list_models()

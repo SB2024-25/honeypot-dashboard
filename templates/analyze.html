@@ -1,0 +1,335 @@
+{% extends 'base.html' %}
+{% block body %}
+<div class="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md max-w-6xl mx-auto">
+  <div class="flex justify-between items-center mb-6">
+    <h2 class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">Attack Analysis Summary</h2>
+    <div class="flex items-center space-x-4">
+      <span class="text-sm text-gray-500 dark:text-gray-400">
+        {% if services_active %}
+          <span class="inline-block w-3 h-3 bg-green-500 rounded-full animate-pulse"></span>
+          Live Monitoring Active
+        {% else %}
+          <span class="inline-block w-3 h-3 bg-gray-400 rounded-full"></span>
+          Services Inactive
+        {% endif %}
+      </span>
+    </div>
+  </div>
+
+  <!-- Stats Overview -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <div class="bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-lg border border-indigo-200 dark:border-indigo-800">
+      <div class="flex items-center">
+        <div class="p-2 bg-indigo-100 dark:bg-indigo-800 rounded-lg mr-3">
+          <svg class="w-6 h-6 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+          </svg>
+        </div>
+        <div>
+          <p class="text-sm font-medium text-indigo-600 dark:text-indigo-400">Total Attacks</p>
+          <p class="text-2xl font-bold text-indigo-800 dark:text-indigo-300" id="totalAttacksCount">0</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+      <div class="flex items-center">
+        <div class="p-2 bg-blue-100 dark:bg-blue-800 rounded-lg mr-3">
+          <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+          </svg>
+        </div>
+        <div>
+          <p class="text-sm font-medium text-blue-600 dark:text-blue-400">Unique Attackers</p>
+          <p class="text-2xl font-bold text-blue-800 dark:text-blue-300" id="uniqueAttackersCount">0</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg border border-purple-200 dark:border-purple-800">
+      <div class="flex items-center">
+        <div class="p-2 bg-purple-100 dark:bg-purple-800 rounded-lg mr-3">
+          <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+          </svg>
+        </div>
+        <div>
+          <p class="text-sm font-medium text-purple-600 dark:text-purple-400">AI Analysis</p>
+          <p class="text-2xl font-bold text-purple-800 dark:text-purple-300">Ready</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Analysis Controls -->
+  <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-200 dark:border-gray-600 mb-6">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+      <div>
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-1">Security Intelligence Report</h3>
+        <p class="text-sm text-gray-600 dark:text-gray-400">
+          AI-powered analysis of recent attack patterns and security recommendations
+        </p>
+      </div>
+      <div class="flex space-x-3">
+        <button id="refreshBtn"
+                class="flex items-center space-x-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          <span>Refresh Analysis</span>
+        </button>
+        <button id="exportBtn"
+                class="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-500 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          <span>Export Report</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Analysis Content -->
+  <div class="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-sm">
+    <!-- Loading State -->
+    <div id="loading" class="hidden p-8 text-center">
+      <div class="inline-flex flex-col items-center space-y-4">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        <div>
+          <p class="text-lg font-medium text-gray-700 dark:text-gray-300">Analyzing Security Data</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Processing attack patterns and generating recommendations...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error State -->
+    <div id="errorMessage" class="hidden p-6">
+      <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+        <div class="flex items-center">
+          <svg class="w-5 h-5 text-red-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <h3 class="text-red-800 dark:text-red-300 font-semibold">Analysis Failed</h3>
+        </div>
+        <p id="errorText" class="text-red-700 dark:text-red-400 text-sm mt-2 ml-8"></p>
+      </div>
+    </div>
+
+    <!-- Rate Limit Warning -->
+    <div id="rateLimitWarning" class="hidden p-4 bg-orange-50 dark:bg-orange-900/20 border-b border-orange-200 dark:border-orange-800">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center">
+          <svg class="w-5 h-5 text-orange-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+          </svg>
+          <span class="text-orange-700 dark:text-orange-300 text-sm">
+            Free tier limit: Please wait <span id="countdown">60</span> seconds between analysis requests
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Analysis Output -->
+    <div id="analysisOutput" class="p-6 min-h-[400px]">
+      <div class="text-center py-12 text-gray-500 dark:text-gray-400">
+        <svg class="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+        </svg>
+        <p class="text-lg mb-2">No Analysis Generated</p>
+        <p class="text-sm">Click "Refresh Analysis" to generate your security report</p>
+      </div>
+    </div>
+
+    <!-- Analysis Footer -->
+    <div class="bg-gray-50 dark:bg-gray-800 px-6 py-4 border-t border-gray-200 dark:border-gray-600 rounded-b-lg">
+      <div class="flex justify-between items-center text-sm text-gray-500 dark:text-gray-400">
+        <div class="flex items-center space-x-4">
+          <span>Generated with Ollama AI</span>
+          <span id="lastUpdated">Never</span>
+        </div>
+        <div class="flex items-center space-x-2">
+          <span id="attackCount">0 attacks analyzed</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+      <h4 class="font-semibold text-blue-800 dark:text-blue-300 mb-2">💡 Pro Tip</h4>
+      <p class="text-sm text-blue-700 dark:text-blue-400">
+        For best results, ensure honeypot services are active and have collected sufficient attack data before analysis.
+      </p>
+    </div>
+    <div class="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
+      <h4 class="font-semibold text-green-800 dark:text-green-300 mb-2">🔄 Real-time Updates</h4>
+      <p class="text-sm text-green-700 dark:text-green-400">
+        Analysis updates automatically reflect new attacks. Refresh periodically for the latest insights.
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+let canMakeRequest = true;
+let retryTimer = null;
+
+// Update stats on page load
+async function updateStats() {
+  try {
+    const response = await fetch("{% url 'get-stats-data-api' %}");
+    if (response.ok) {
+      const data = await response.json();
+      document.getElementById('totalAttacksCount').textContent = data.total_attacks || '0';
+      document.getElementById('uniqueAttackersCount').textContent = data.unique_attackers || '0';
+    }
+  } catch (error) {
+    console.error('Failed to fetch stats:', error);
+  }
+}
+
+async function fetchAnalysis() {
+  if (!canMakeRequest) return;
+
+  const output = document.getElementById("analysisOutput");
+  const loading = document.getElementById("loading");
+  const errorMessage = document.getElementById("errorMessage");
+  const errorText = document.getElementById("errorText");
+  const refreshBtn = document.getElementById("refreshBtn");
+  const rateLimitWarning = document.getElementById("rateLimitWarning");
+  const lastUpdated = document.getElementById("lastUpdated");
+  const attackCount = document.getElementById("attackCount");
+
+  // Reset states
+  loading.classList.remove("hidden");
+  errorMessage.classList.add("hidden");
+  output.classList.add("hidden");
+  refreshBtn.disabled = true;
+
+  try {
+    const response = await fetch("{% url 'analyze_api' %}");
+    
+    if (response.status === 429) {
+      // Rate limit handling
+      const errorData = await response.json();
+      const retryAfter = errorData.retry_after || 60;
+      
+      canMakeRequest = false;
+      refreshBtn.disabled = true;
+      rateLimitWarning.classList.remove("hidden");
+      
+      let secondsLeft = retryAfter;
+      const countdownElem = document.getElementById("countdown");
+      const updateCountdown = () => {
+        countdownElem.textContent = secondsLeft;
+        secondsLeft--;
+        
+        if (secondsLeft < 0) {
+          clearInterval(retryTimer);
+          rateLimitWarning.classList.add("hidden");
+          refreshBtn.disabled = false;
+          canMakeRequest = true;
+        }
+      };
+      
+      updateCountdown();
+      retryTimer = setInterval(updateCountdown, 1000);
+      throw new Error(`Rate limit exceeded. Please wait ${retryAfter} seconds.`);
+    }
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || errorData.summary || `Server error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    if (data.summary) {
+      output.innerHTML = data.summary;
+      output.classList.remove("hidden");
+      lastUpdated.textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+      attackCount.textContent = `${document.getElementById('totalAttacksCount').textContent} attacks analyzed`;
+    } else if (data.error) {
+      throw new Error(data.error);
+    } else {
+      throw new Error("No analysis data received");
+    }
+    
+  } catch (err) {
+    console.error("Analysis fetch error:", err);
+    errorText.textContent = err.message;
+    errorMessage.classList.remove("hidden");
+  } finally {
+    loading.classList.add("hidden");
+    
+    if (canMakeRequest) {
+      refreshBtn.disabled = false;
+    }
+  }
+}
+
+// Export functionality
+document.getElementById("exportBtn").addEventListener("click", function() {
+  const analysisContent = document.getElementById("analysisOutput").innerHTML;
+  if (!analysisContent || analysisContent.includes('No Analysis Generated')) {
+    alert('Please generate an analysis first before exporting.');
+    return;
+  }
+  
+  const blob = new Blob([`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Honeypot Security Analysis Report</title>
+      <style>
+        body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
+        h3 { color: #4f46e5; margin-top: 24px; }
+        ul { margin: 8px 0; padding-left: 20px; }
+        li { margin: 4px 0; }
+        .header { border-bottom: 2px solid #4f46e5; padding-bottom: 16px; margin-bottom: 24px; }
+        .footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 14px; }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <h1>Honeypot Security Analysis Report</h1>
+        <p>Generated on: ${new Date().toLocaleString()}</p>
+        <p>Total Attacks: ${document.getElementById('totalAttacksCount').textContent}</p>
+      </div>
+      ${analysisContent}
+      <div class="footer">
+        <p>Generated by Honeypot Monitoring System with AI Analysis</p>
+      </div>
+    </body>
+    </html>
+  `], { type: 'text/html' });
+  
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `honeypot-analysis-${new Date().toISOString().split('T')[0]}.html`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+
+// Event listeners
+document.getElementById("refreshBtn").addEventListener("click", fetchAnalysis);
+
+// Initialize on page load
+window.addEventListener("load", function() {
+  updateStats();
+  // Auto-load analysis after a short delay
+  setTimeout(fetchAnalysis, 1000);
+});
+
+// Clean up on page unload
+window.addEventListener("beforeunload", function() {
+  if (retryTimer) {
+    clearInterval(retryTimer);
+  }
+});
+</script>
+{% endblock %}
