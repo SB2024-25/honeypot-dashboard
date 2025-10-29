@@ -859,7 +859,6 @@ Keep it concise, professional, and focused on actionable insights. Use only the 
             # Ollama not installed
             summary = """
             <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200">
-                <h3 class="font-bold text-lg text-blue-800 dark:text-blue-300 mb-2">🚀 Install Ollama for AI Analysis</h3>
                 <p class="text-blue-700 dark:text-blue-400 mb-3">To enable free AI-powered security analysis:</p>
                 <div class="bg-gray-800 text-green-400 p-3 rounded font-mono text-sm">
                     <div>curl -fsSL https://ollama.ai/install.sh | sh</div>
@@ -913,7 +912,6 @@ def generate_fallback_analysis(attack_counts, source_counts, total_attacks):
         </ul>
         
         <p class="text-yellow-600 dark:text-yellow-500 text-xs mt-3">
-            💡 <em>Install Ollama for AI-powered analysis with deeper insights</em>
         </p>
     </div>
     """
@@ -946,7 +944,6 @@ def generate_fallback_analysis(attack_counts, source_counts, total_attacks):
         </div>
         
         <p class="text-yellow-600 dark:text-yellow-500 text-xs mt-2">
-            💡 <em>Install Ollama for AI-powered analysis with deeper insights</em>
         </p>
     </div>
     """
