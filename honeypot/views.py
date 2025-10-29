@@ -19,6 +19,10 @@ from faker import Faker
 from django.conf import settings
 import geoip2.database
 import geoip2.errors
+import json
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
 
 import google.generativeai as genai
 from google.generativeai.types import HarmCategory, HarmBlockThreshold
@@ -731,6 +735,47 @@ def handlelogin(request):
 @login_required
 def analyze(request):
     from django.utils.html import strip_tags
+
+    # Debug prints to see thread states
+    print("DEBUG: Flask thread alive:", flask_thread.is_alive() if flask_thread else None)
+    print("DEBUG: FTP thread alive:", ftp_thread.is_alive() if ftp_thread else None)
+    print("DEBUG: SSH thread alive:", ssh_thread.is_alive() if ssh_thread else None)
+
+    # Compute services_active flag
+    services_active = is_website_honeypot_active() or is_network_honeypot_active()
+
+    if not ai_model:
+        return render(request, "analyze.html", {"error": "AI model not configured.", "services_active": services_active})
+
+    analysis_text = ""
+    try:
+        all_attacks = AttackLog.objects.all().order_by("-timestamp")[:500]
+        if all_attacks.exists():
+            combined_info = "\n".join([
+                f"{a.attack_type} on {a.source} from {a.location}" for a in all_attacks
+            ])
+            prompt = f"""
+You are a cybersecurity analyst reviewing honeypot logs. 
+Summarize the main attack patterns, techniques used, and give 
+3–4 concise defensive recommendations to mitigate them. 
+
+Logs summary:
+{strip_tags(combined_info)}
+"""
+            print("DEBUG: Prompt sent to AI:", prompt)  # Log prompt for debugging
+            response = ai_model.generate_content(prompt)
+            analysis_text = response.text or "No response received."
+        else:
+            analysis_text = "No attack data available to analyze."
+    except Exception as e:
+        analysis_text = f"Error during AI analysis: {e}"
+
+    return render(request, "analyze.html", {
+        "analysis_text": analysis_text,
+        "services_active": services_active,
+    })
+
+    from django.utils.html import strip_tags
     if not ai_model:
         return render(request, "analyze.html", {"error": "AI model not configured."})
 
@@ -837,7 +882,7 @@ Keep it concise, professional, and focused on actionable insights. Use only the 
             import ollama
             
             response = ollama.generate(
-                model='llama3.2:3b',  # Use whatever model you downloaded
+                model='llama3.2:1b',  # Use whatever model you downloaded
                 prompt=prompt,
                 options={
                     'temperature': 0.3,
@@ -879,6 +924,28 @@ Keep it concise, professional, and focused on actionable insights. Use only the 
         print(f"Analyze API error: {str(exc)}")
         return JsonResponse({"error": "Analysis service temporarily unavailable. Please try again."}, status=500)
 
+@csrf_exempt
+@login_required
+def analyze_chunk(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    if not ai_model:
+        return JsonResponse({'error': 'AI model not configured'}, status=500)
+
+    try:
+        data = json.loads(request.body)
+        chunk_data = data.get('data', '')
+        prompt = f"Analyze this data chunk:\n{chunk_data}"
+
+        print("DEBUG: Chunk prompt sent to AI:", prompt)
+
+        response = ai_model.generate_content(prompt)
+        analysis = response.text if hasattr(response, 'text') else ''
+
+        return JsonResponse({'analysis': analysis})
+    except Exception as e:
+        return JsonResponse({'error': f"Error during chunk analysis: {str(e)}"}, status=500)
 
 def generate_fallback_analysis(attack_counts, source_counts, total_attacks):
     """Generate a basic analysis when Ollama is unavailable"""
